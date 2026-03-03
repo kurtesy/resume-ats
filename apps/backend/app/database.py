@@ -70,6 +70,7 @@ class Database:
         processing_status: str = "pending",
         cover_letter: str | None = None,
         outreach_message: str | None = None,
+        title: str | None = None,
     ) -> dict[str, Any]:
         """Create a new resume entry.
 
@@ -89,6 +90,7 @@ class Database:
             "processing_status": processing_status,
             "cover_letter": cover_letter,
             "outreach_message": outreach_message,
+            "title": title,
             "created_at": now,
             "updated_at": now,
         }

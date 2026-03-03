@@ -70,8 +70,10 @@
   --radius: 0.625rem;
 
   /* Swiss International Style Palette */
-  --background: #f0f0e8; /* Canvas */
-  --foreground: #000000; /* Ink */
+  --background: #f0f0e8;
+  /* Canvas */
+  --foreground: #000000;
+  /* Ink */
 
   --card: #f0f0e8;
   --card-foreground: #000000;
@@ -79,10 +81,12 @@
   --popover: #f0f0e8;
   --popover-foreground: #000000;
 
-  --primary: #1d4ed8; /* Hyper Blue */
+  --primary: #1d4ed8;
+  /* Hyper Blue */
   --primary-foreground: #ffffff;
 
-  --secondary: #e5e5e0; /* Panel Grey */
+  --secondary: #e5e5e0;
+  /* Panel Grey */
   --secondary-foreground: #000000;
 
   --muted: #e5e5e0;
@@ -91,7 +95,8 @@
   --accent: #e5e5e0;
   --accent-foreground: #000000;
 
-  --destructive: #dc2626; /* Alert Red */
+  --destructive: #dc2626;
+  /* Alert Red */
   --destructive-foreground: #ffffff;
 
   --border: #000000;
@@ -141,12 +146,18 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+  }
+
+  button {
+    font-family: var(--font-mono);
   }
 }
 
 @media print {
+
   html,
   body {
     background: #ffffff !important;
@@ -222,18 +233,19 @@
 
 /* Keep section header together with its first item */
 .resume-body .resume-section {
-  break-inside: auto; /* Allow sections to span pages */
+  break-inside: auto;
+  /* Allow sections to span pages */
 }
 
 /* Ensure the header + first content element stay together */
-.resume-body .resume-section-title + .resume-items > *:first-child,
-.resume-body .resume-section-title-sm + .resume-items > *:first-child,
-.resume-body .resume-section-title + p,
-.resume-body .resume-section-title-sm + p,
-.resume-body .resume-section-title + ul,
-.resume-body .resume-section-title-sm + ul,
-.resume-body .resume-section-title + .resume-item,
-.resume-body .resume-section-title-sm + .resume-item {
+.resume-body .resume-section-title+.resume-items>*:first-child,
+.resume-body .resume-section-title-sm+.resume-items>*:first-child,
+.resume-body .resume-section-title+p,
+.resume-body .resume-section-title-sm+p,
+.resume-body .resume-section-title+ul,
+.resume-body .resume-section-title-sm+ul,
+.resume-body .resume-section-title+.resume-item,
+.resume-body .resume-section-title-sm+.resume-item {
   break-before: avoid;
   page-break-before: avoid;
 }
@@ -264,14 +276,14 @@
   }
 
   /* Keep section header with first content in print */
-  .resume-body .resume-section-title + .resume-items > *:first-child,
-  .resume-body .resume-section-title-sm + .resume-items > *:first-child,
-  .resume-body .resume-section-title + p,
-  .resume-body .resume-section-title-sm + p,
-  .resume-body .resume-section-title + ul,
-  .resume-body .resume-section-title-sm + ul,
-  .resume-body .resume-section-title + .resume-item,
-  .resume-body .resume-section-title-sm + .resume-item {
+  .resume-body .resume-section-title+.resume-items>*:first-child,
+  .resume-body .resume-section-title-sm+.resume-items>*:first-child,
+  .resume-body .resume-section-title+p,
+  .resume-body .resume-section-title-sm+p,
+  .resume-body .resume-section-title+ul,
+  .resume-body .resume-section-title-sm+ul,
+  .resume-body .resume-section-title+.resume-item,
+  .resume-body .resume-section-title-sm+.resume-item {
     break-before: avoid !important;
     page-break-before: avoid !important;
   }

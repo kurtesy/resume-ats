@@ -4,45 +4,51 @@
  * Single source of truth for API configuration and base fetch utilities.
  */
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-export const API_BASE = `${API_URL}/api/v1`; // Ensure this points to your backend API
+const DEFAULT_PUBLIC_API_URL = '/';
+const INTERNAL_API_ORIGIN = 'http://127.0.0.1:8000';
 
-let currentUsername: string | null = null;
-
-/**
- * Sets the username for all subsequent API requests.
- * This should be called from the UI when the app initializes or when the user changes.
- * @param username The username to use for API requests.
- */
-export function setApiUsername(username: string | null) {
-  currentUsername = username;
+function normalizeApiUrl(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === '/') {
+    return '/';
+  }
+  return trimmed.replace(/\/+$/, '');
 }
+
+function toApiBase(apiUrl: string): string {
+  if (apiUrl === '/') {
+    return '/api/v1';
+  }
+  return `${apiUrl}/api/v1`;
+}
+
+function resolveRuntimeApiBase(apiBase: string): string {
+  if (typeof window !== 'undefined' || !apiBase.startsWith('/')) {
+    return apiBase;
+  }
+  return `${INTERNAL_API_ORIGIN}${apiBase}`;
+}
+
+export const API_URL = normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL ?? DEFAULT_PUBLIC_API_URL);
+export const API_BASE = resolveRuntimeApiBase(toApiBase(API_URL));
 
 /**
  * Standard fetch wrapper with common error handling.
- * Automatically adds the `X-Username` header if a user is set.
  * Returns the Response object for flexibility.
  */
 export async function apiFetch(endpoint: string, options?: RequestInit): Promise<Response> {
-  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
-  const headers = new Headers(options?.headers || {});
+  const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const isAbsoluteUrl = endpoint.startsWith('http://') || endpoint.startsWith('https://');
+  const isApiPath = normalizedEndpoint.startsWith('/api/');
+  let url = `${API_BASE}${normalizedEndpoint}`;
 
-  // Add the username header if it's set
-  if (currentUsername) {
-    headers.set('X-Username', currentUsername);
+  if (isAbsoluteUrl) {
+    url = endpoint;
+  } else if (isApiPath) {
+    url = resolveRuntimeApiBase(normalizedEndpoint);
   }
 
-  const response = await fetch(url, { ...options, headers });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({
-      detail: response.statusText || 'An unknown API error occurred',
-    }));
-    // Use the `detail` field from FastAPI's HTTPExceptions
-    throw new Error(errorData.detail);
-  }
-
-  return response;
+  return fetch(url, options);
 }
 
 /**

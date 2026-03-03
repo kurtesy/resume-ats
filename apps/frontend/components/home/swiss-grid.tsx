@@ -4,7 +4,6 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations } from '@/lib/i18n';
-import UsernameFilter from '@/components/UsernameFilter';
 
 export const SwissGrid = ({ children }: { children: React.ReactNode }) => {
   const { t } = useTranslations();
@@ -30,7 +29,6 @@ export const SwissGrid = ({ children }: { children: React.ReactNode }) => {
             {'// '}
             {t('dashboard.selectModule')}
           </p>
-          <UsernameFilter />
         </div>
 
         {/* Content Grid - Scrollable area with NO padding */}

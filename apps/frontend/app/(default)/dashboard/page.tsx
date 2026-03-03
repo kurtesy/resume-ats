@@ -103,7 +103,7 @@ export default function DashboardPage() {
 
   const loadTailoredResumes = useCallback(async () => {
     try {
-      const data = await fetchResumeList(false);
+      const data = await fetchResumeList(true);
       const masterFromList = data.find((r) => r.is_master);
       const storedId = localStorage.getItem('master_resume_id');
       const resolvedMasterId = masterFromList?.resume_id || storedId;
@@ -143,7 +143,7 @@ export default function DashboardPage() {
             const snippet = (jd?.content || '').slice(0, 80);
             jobSnippetCacheRef.current[r.resume_id] = snippet;
             jobSnippets[r.resume_id] = snippet;
-          } catch (_err) {
+          } catch {
             // ignore missing job descriptions and cache empty result
             jobSnippetCacheRef.current[r.resume_id] = '';
             jobSnippets[r.resume_id] = '';
@@ -257,6 +257,35 @@ export default function DashboardPage() {
     }
   };
 
+  const getMonogram = (title: string): string => {
+    const words = title.split(/\s+/).filter((w) => /^[a-zA-Z]/.test(w));
+    return words
+      .slice(0, 3)
+      .map((w) => w.charAt(0).toUpperCase())
+      .join('');
+  };
+
+  // Muted palette that complements the #F0F0E8 canvas
+  const cardPalette = [
+    { bg: '#1D4ED8', fg: '#FFFFFF' }, // Hyper Blue
+    { bg: '#15803D', fg: '#FFFFFF' }, // Signal Green
+    { bg: '#000000', fg: '#FFFFFF' }, // Ink
+    { bg: '#92400E', fg: '#FFFFFF' }, // Warm Brown
+    { bg: '#7C3AED', fg: '#FFFFFF' }, // Violet
+    { bg: '#0E7490', fg: '#FFFFFF' }, // Teal
+    { bg: '#B91C1C', fg: '#FFFFFF' }, // Deep Red
+    { bg: '#4338CA', fg: '#FFFFFF' }, // Indigo
+  ];
+
+  const hashTitle = (title: string): number => {
+    let hash = 0;
+    for (let i = 0; i < title.length; i++) {
+      hash = (hash << 5) - hash + title.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash);
+  };
+
   const totalCards = 1 + tailoredResumes.length + 1;
   const fillerCount = Math.max(0, (5 - (totalCards % 5)) % 5);
   const extraFillerCount = 5;
@@ -361,7 +390,7 @@ export default function DashboardPage() {
                   <span className="font-mono font-bold text-lg">M</span>
                 </div>
                 <div className="flex gap-1">
-                  {processingStatus === 'failed' && (
+                  {(processingStatus === 'failed' || processingStatus === 'processing') && (
                     <>
                       <Button
                         variant="ghost"
@@ -393,7 +422,7 @@ export default function DashboardPage() {
                   {getStatusDisplay().icon}
                   {t('dashboard.statusLine', { status: getStatusDisplay().text })}
                 </div>
-                {processingStatus === 'failed' && (
+                {(processingStatus === 'failed' || processingStatus === 'processing') && (
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                     <Button
                       variant="outline"
@@ -422,42 +451,43 @@ export default function DashboardPage() {
         )}
 
         {/* 2. Tailored Resumes */}
-        {tailoredResumes.map((resume) => (
-          <Card
-            key={resume.resume_id}
-            variant="interactive"
-            className="aspect-square h-full bg-canvas"
-            onClick={() => router.push(`/resumes/${resume.resume_id}`)}
-          >
-            <div className="flex-1 flex flex-col">
-              <div className="flex justify-between items-start mb-6">
-                <div className="w-12 h-12 border-2 border-black bg-white text-black flex items-center justify-center">
-                  <span className="font-mono font-bold">T</span>
+        {tailoredResumes.map((resume) => {
+          const title =
+            resume.title || resume.jobSnippet || resume.filename || t('dashboard.tailoredResume');
+          const color = cardPalette[hashTitle(title) % cardPalette.length];
+          return (
+            <Card
+              key={resume.resume_id}
+              variant="interactive"
+              className="aspect-square h-full bg-canvas"
+              onClick={() => router.push(`/resumes/${resume.resume_id}`)}
+            >
+              <div className="flex-1 flex flex-col">
+                <div className="flex justify-between items-start mb-6">
+                  <div
+                    className="w-12 h-12 border-2 border-black flex items-center justify-center"
+                    style={{ backgroundColor: color.bg, color: color.fg }}
+                  >
+                    <span className="font-mono font-bold">{getMonogram(title)}</span>
+                  </div>
+                  <span className="font-mono text-xs text-gray-500 uppercase">
+                    {resume.processing_status}
+                  </span>
                 </div>
-                <span className="font-mono text-xs text-gray-500 uppercase">
-                  {resume.processing_status}
-                </span>
+                <CardTitle className="text-lg">
+                  <span className="block font-serif text-base font-bold leading-tight mb-1 w-full line-clamp-2">
+                    {title}
+                  </span>
+                </CardTitle>
+                <CardDescription className="mt-auto pt-4 uppercase">
+                  {t('dashboard.edited', {
+                    date: formatDate(resume.updated_at || resume.created_at),
+                  })}{' '}
+                </CardDescription>
               </div>
-              <CardTitle className="text-lg">
-                {/* Job description snippet (if available) */}
-                <span className="block text-base font-bold leading-tight mb-1 truncate w-full whitespace-nowrap">
-                  {resume.jobSnippet
-                    ? resume.jobSnippet
-                    : resume.filename || t('dashboard.tailoredResume')}
-                </span>
-                {/* Resume filename snippet */}
-                <span className="block text-sm font-normal text-gray-700 truncate w-full whitespace-nowrap">
-                  {(resume.filename || t('dashboard.tailoredResume')).slice(0, 40)}
-                </span>
-              </CardTitle>
-              <CardDescription className="mt-auto pt-4 uppercase">
-                {t('dashboard.edited', {
-                  date: formatDate(resume.updated_at || resume.created_at),
-                })}{' '}
-              </CardDescription>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
 
         {/* 3. Create Tailored Resume */}
         <Card className="aspect-square h-full" variant="default">

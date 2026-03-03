@@ -352,27 +352,27 @@ export default function TailorPage() {
             options={
               promptOptions.length > 0
                 ? promptOptions.map((opt) => ({
-                    id: opt.id,
-                    label: t(`tailor.promptOptions.${opt.id}.label`),
-                    description: t(`tailor.promptOptions.${opt.id}.description`),
-                  }))
+                  id: opt.id,
+                  label: t(`tailor.promptOptions.${opt.id}.label`),
+                  description: t(`tailor.promptOptions.${opt.id}.description`),
+                }))
                 : [
-                    {
-                      id: 'nudge',
-                      label: t('tailor.promptOptions.nudge.label'),
-                      description: t('tailor.promptOptions.nudge.description'),
-                    },
-                    {
-                      id: 'keywords',
-                      label: t('tailor.promptOptions.keywords.label'),
-                      description: t('tailor.promptOptions.keywords.description'),
-                    },
-                    {
-                      id: 'full',
-                      label: t('tailor.promptOptions.full.label'),
-                      description: t('tailor.promptOptions.full.description'),
-                    },
-                  ]
+                  {
+                    id: 'nudge',
+                    label: t('tailor.promptOptions.nudge.label'),
+                    description: t('tailor.promptOptions.nudge.description'),
+                  },
+                  {
+                    id: 'keywords',
+                    label: t('tailor.promptOptions.keywords.label'),
+                    description: t('tailor.promptOptions.keywords.description'),
+                  },
+                  {
+                    id: 'full',
+                    label: t('tailor.promptOptions.full.label'),
+                    description: t('tailor.promptOptions.full.description'),
+                  },
+                ]
             }
             value={selectedPromptId}
             onChange={(value) => {
@@ -387,7 +387,7 @@ export default function TailorPage() {
           <div className="relative">
             <Textarea
               placeholder={t('tailor.jobDescriptionPlaceholder')}
-              className="min-h-[300px] font-mono text-sm bg-gray-50 border-2 border-black focus:ring-0 focus:border-blue-700 resize-none p-4 rounded-none shadow-inner"
+              className="min-h-[300px] font-mono text-sm bg-[#F0F0E8] border-2 border-black focus:ring-0 focus:border-blue-700 resize-none p-4 rounded-none"
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
               onKeyDown={handleTextareaKeyDown}

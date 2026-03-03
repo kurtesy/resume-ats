@@ -14,7 +14,6 @@ export {
   apiPut,
   apiDelete,
   getUploadUrl,
-  setApiUsername,
 } from './client';
 
 // Resume operations

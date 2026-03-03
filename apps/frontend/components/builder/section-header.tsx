@@ -87,9 +87,8 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
 
   return (
     <div
-      className={`space-y-0 border p-6 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] ${
-        isHidden ? 'border-dashed border-gray-400 opacity-60' : 'border-black'
-      }`}
+      className={`space-y-0 border p-6 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] ${isHidden ? 'border-dashed border-gray-400 opacity-60' : 'border-black'
+        }`}
     >
       {/* Section Header */}
       <div className="flex justify-between items-center border-b border-black pb-2 mb-4">
@@ -141,7 +140,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
                 </span>
               )}
               {isHidden && (
-                <span className="font-mono text-[10px] uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 border border-amber-200">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-orange-600 bg-white px-1.5 py-0.5 border border-orange-500">
                   {t('builder.sectionHeader.hiddenFromPdfTag')}
                 </span>
               )}

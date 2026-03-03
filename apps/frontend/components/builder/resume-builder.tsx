@@ -47,7 +47,7 @@ import { useTranslations } from '@/lib/i18n';
 import { type TemplateSettings, DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
-import { downloadBlobAsFile, openUrlInNewTab } from '@/lib/utils/download';
+import { downloadBlobAsFile, openUrlInNewTab, sanitizeFilename } from '@/lib/utils/download';
 import type { RegenerateItemInput } from '@/lib/api/enrichment';
 
 type TabId = 'resume' | 'cover-letter' | 'outreach' | 'jd-match';
@@ -143,6 +143,7 @@ const ResumeBuilderContent = () => {
   const [isCoverLetterSaving, setIsCoverLetterSaving] = useState(false);
   const [isOutreachSaving, setIsOutreachSaving] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [resumeTitle, setResumeTitle] = useState<string | null>(null);
 
   // On-demand generation state
   const [isTailoredResume, setIsTailoredResume] = useState(false);
@@ -167,6 +168,8 @@ const ResumeBuilderContent = () => {
 
       try {
         const data = await fetchResume(resumeId);
+        // Update resume title for downloads
+        setResumeTitle(data.title ?? null);
         if (data.processed_resume) {
           setResumeData(data.processed_resume as ResumeData);
           setLastSavedData(data.processed_resume as ResumeData);
@@ -285,6 +288,8 @@ const ResumeBuilderContent = () => {
           const data = await fetchResume(resumeId);
           // Track if this is a tailored resume (has parent_id)
           setIsTailoredResume(Boolean(data.parent_id));
+          // Store resume title for downloads
+          setResumeTitle(data.title ?? null);
           // Load cover letter and outreach message if available
           if (data.cover_letter) {
             setCoverLetter(data.cover_letter);
@@ -431,7 +436,8 @@ const ResumeBuilderContent = () => {
     try {
       setIsDownloading(true);
       const blob = await downloadResumePdf(resumeId, templateSettings, uiLanguage);
-      downloadBlobAsFile(blob, `resume_${resumeId}.pdf`);
+      const filename = sanitizeFilename(resumeTitle, resumeId, 'resume');
+      downloadBlobAsFile(blob, filename);
       showNotification(t('builder.alerts.downloadSuccess'), 'success');
     } catch (error) {
       console.error('Failed to download resume:', error);
@@ -480,7 +486,8 @@ const ResumeBuilderContent = () => {
     try {
       setIsDownloading(true);
       const blob = await downloadCoverLetterPdf(resumeId, templateSettings.pageSize, uiLanguage);
-      downloadBlobAsFile(blob, `cover_letter_${resumeId}.pdf`);
+      const filename = sanitizeFilename(resumeTitle, resumeId, 'cover-letter');
+      downloadBlobAsFile(blob, filename);
     } catch (error) {
       console.error('Failed to download cover letter:', error);
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
@@ -798,7 +805,7 @@ const ResumeBuilderContent = () => {
                     </p>
                   </div>
 
-                  <div className="border-2 border-black bg-yellow-50 p-4">
+                  <div className="border-2 border-black bg-[#F0F0E8] p-4">
                     <h3 className="font-mono text-sm font-bold uppercase mb-2">
                       {t('builder.jdMatch.highlightedKeywordsTitle')}
                     </h3>
@@ -822,7 +829,7 @@ const ResumeBuilderContent = () => {
                     </p>
                   </div>
 
-                  <div className="border-2 border-black bg-gray-50 p-4">
+                  <div className="border-2 border-black bg-white p-4">
                     <h3 className="font-mono text-sm font-bold uppercase mb-2">
                       {t('builder.jdMatch.tipsTitle')}
                     </h3>
@@ -934,7 +941,7 @@ const ResumeBuilderContent = () => {
               <div className="w-2 h-2 bg-green-700"></div>
               <span className="uppercase">
                 {templateSettings.template === 'swiss-single' ||
-                templateSettings.template === 'modern'
+                  templateSettings.template === 'modern'
                   ? t('builder.footer.singleColumn')
                   : t('builder.footer.twoColumn')}
               </span>
