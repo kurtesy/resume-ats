@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { setApiUsername } from "@/lib/api/client";
+import { setApiUsername } from "@/lib/api";
+
 
 export default function UsernameFilter() {
     const [username, setUsername] = useState("");

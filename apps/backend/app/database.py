@@ -20,13 +20,8 @@ class Database:
 
     _master_resume_lock = asyncio.Lock()
 
-    def __init__(self, db_path: Path | None = None, username: str | None = None):
-        if username:
-            # Basic sanitization to prevent path traversal
-            safe_username = "".join(c for c in username if c.isalnum() or c in ('-', '_'))
-            self.db_path = settings.get_user_data_dir(safe_username) / "database.json"
-        else:
-            self.db_path = db_path or settings.db_path
+    def __init__(self, db_path: Path | None = None):
+        self.db_path = db_path or settings.db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._db: TinyDB | None = None
 
@@ -114,7 +109,19 @@ class Database:
         the FastAPI event loop unlike threading.Lock.
         """
         async with self._master_resume_lock:
-            is_master = self.get_master_resume() is None
+            current_master = self.get_master_resume()
+            is_master = current_master is None
+
+            # Recovery behavior: if the current master is stuck in failed or
+            # processing state, promote the next upload to become the new master.
+            if current_master and current_master.get("processing_status") in ("failed", "processing"):
+                Resume = Query()
+                self.resumes.update(
+                    {"is_master": False},
+                    Resume.resume_id == current_master["resume_id"],
+                )
+                is_master = True
+
             return self.create_resume(
                 content=content,
                 content_type=content_type,
@@ -271,7 +278,7 @@ class Database:
         self.jobs.truncate()
         self.improvements.truncate()
 
-        # Clear uploads directory (for single-user mode)
+        # Clear uploads directory
         uploads_dir = settings.data_dir / "uploads"
         if uploads_dir.exists():
             import shutil
@@ -280,5 +287,5 @@ class Database:
             uploads_dir.mkdir(parents=True, exist_ok=True)
 
 
-# Global database instance for single-user mode (legacy)
+# Global database instance
 db = Database()
