@@ -1,0 +1,111 @@
+
+> resume-matcher-ui@1.0.0 dev
+> next dev --turbopack
+
+▲ Next.js 16.1.5 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.180:3000
+- Experiments (use with caution):
+  ✓ turbopackUseSystemTlsCerts
+
+✓ Starting...
+✓ Ready in 561ms
+ GET /dashboard 200 in 284ms (compile: 199ms, render: 85ms)
+
+> resume-matcher-ui@1.0.0 dev
+> next dev --turbopack
+
+⚠ Port 3000 is in use by process 39610, using available port 3001 instead.
+▲ Next.js 16.1.5 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.0.180:3001
+- Experiments (use with caution):
+  ✓ turbopackUseSystemTlsCerts
+
+✓ Starting...
+⨯ Unable to acquire lock at /Users/nishant.patel/MyProj/Resume-Matcher/apps/frontend/.next/dev/lock, is another instance of next dev running?
+  Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
+[?25h
+
+> resume-matcher-ui@1.0.0 dev
+> next dev --turbopack
+
+⚠ Port 3000 is in use by process 39610, using available port 3001 instead.
+▲ Next.js 16.1.5 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.0.180:3001
+- Experiments (use with caution):
+  ✓ turbopackUseSystemTlsCerts
+
+✓ Starting...
+
+> resume-matcher-ui@1.0.0 dev
+> next dev --turbopack
+
+⨯ Unable to acquire lock at /Users/nishant.patel/MyProj/Resume-Matcher/apps/frontend/.next/dev/lock, is another instance of next dev running?
+  Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
+[?25h
+⚠ Port 3000 is in use by process 39610, using available port 3001 instead.
+▲ Next.js 16.1.5 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.0.180:3001
+- Experiments (use with caution):
+  ✓ turbopackUseSystemTlsCerts
+
+✓ Starting...
+⨯ Unable to acquire lock at /Users/nishant.patel/MyProj/Resume-Matcher/apps/frontend/.next/dev/lock, is another instance of next dev running?
+  Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
+[?25h
+ GET /dashboard 200 in 49ms (compile: 7ms, render: 43ms)
+ GET /resumes/49edcfbe-f233-41a0-a575-2dfd32be83af 200 in 216ms (compile: 207ms, render: 9ms)
+
+> resume-matcher-ui@1.0.0 dev
+> next dev --turbopack
+
+⚠ Port 3000 is in use by process 39610, using available port 3001 instead.
+▲ Next.js 16.1.5 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.0.180:3001
+- Experiments (use with caution):
+  ✓ turbopackUseSystemTlsCerts
+
+✓ Starting...
+⨯ Unable to acquire lock at /Users/nishant.patel/MyProj/Resume-Matcher/apps/frontend/.next/dev/lock, is another instance of next dev running?
+  Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
+[?25h
+ GET /dashboard 200 in 26ms (compile: 3ms, render: 24ms)
+ GET /dashboard 200 in 21ms (compile: 3ms, render: 18ms)
+ GET /dashboard 200 in 18ms (compile: 1941µs, render: 16ms)
+ GET / 200 in 35ms (compile: 20ms, render: 15ms)
+ GET / 200 in 10ms (compile: 1046µs, render: 9ms)
+ GET / 200 in 20ms (compile: 1373µs, render: 19ms)
+ GET /dashboard 200 in 25ms (compile: 3ms, render: 22ms)
+ GET /resumes/49edcfbe-f233-41a0-a575-2dfd32be83af 200 in 13ms (compile: 5ms, render: 8ms)
+✓ Compiled in 273ms
+ GET /dashboard 200 in 119ms (compile: 48ms, render: 71ms)
+ GET /dashboard 200 in 70ms (compile: 7ms, render: 62ms)
+ GET /dashboard 200 in 33ms (compile: 4ms, render: 29ms)
+ GET /resumes/49edcfbe-f233-41a0-a575-2dfd32be83af 200 in 13ms (compile: 5ms, render: 8ms)
+ GET /tailor 200 in 21ms (compile: 16ms, render: 5ms)
+ GET /resumes/a227d3b2-c832-4d1e-8c27-bb5c12103eaf 200 in 10ms (compile: 3ms, render: 6ms)
+ GET /print/resumes/a227d3b2-c832-4d1e-8c27-bb5c12103eaf?template=swiss-single&pageSize=A4&marginTop=10&marginBottom=10&marginLeft=10&marginRight=10&sectionSpacing=3&itemSpacing=2&lineHeight=3&fontSize=3&headerScale=3&headerFont=serif&bodyFont=sans-serif&compactMode=false&showContactIcons=false&accentColor=blue&lang=en 200 in 926ms (compile: 197ms, render: 729ms)
+ GET /builder?id=a227d3b2-c832-4d1e-8c27-bb5c12103eaf 200 in 46ms (compile: 36ms, render: 9ms)
+ GET /print/resumes/a227d3b2-c832-4d1e-8c27-bb5c12103eaf?template=modern-two-column&pageSize=A4&marginTop=10&marginBottom=10&marginLeft=10&marginRight=10&sectionSpacing=3&itemSpacing=2&lineHeight=3&fontSize=3&headerScale=3&headerFont=serif&bodyFont=sans-serif&compactMode=false&showContactIcons=true&accentColor=green&lang=en 200 in 345ms (compile: 4ms, render: 341ms)
+ GET /dashboard 200 in 11ms (compile: 2ms, render: 9ms)
+ GET /tailor 200 in 18ms (compile: 4ms, render: 14ms)
+ GET /resumes/af0cf463-b375-4285-b956-e435e00d7df6 200 in 12ms (compile: 4ms, render: 8ms)
+ GET /print/resumes/af0cf463-b375-4285-b956-e435e00d7df6?template=swiss-single&pageSize=A4&marginTop=10&marginBottom=10&marginLeft=10&marginRight=10&sectionSpacing=3&itemSpacing=2&lineHeight=3&fontSize=3&headerScale=3&headerFont=serif&bodyFont=sans-serif&compactMode=false&showContactIcons=false&accentColor=blue&lang=en 200 in 100ms (compile: 3ms, render: 97ms)
+  Downloading swc package @next/swc-wasm-nodejs... to /Users/nishant.patel/Library/Caches/next-swc
+⚠ Attempted to load @next/swc-darwin-arm64, but an error occurred: dlopen(/Users/nishant.patel/MyProj/Resume-Matcher/apps/frontend/node_modules/@next/swc-darwin-arm64/next-swc.darwin-arm64.node, 0x0001): tried: '/Users/nishant.patel/MyProj/Resume-Matcher/apps/frontend/node_modules/@next/swc-darwin-arm64/next-swc.darwin-arm64.node' (code signature in <0CAB37FD-C86E-3781-ADF6-78C02171D125> '/Users/nishant.patel/MyProj/Resume-Matcher/apps/frontend/node_modules/@next/swc-darwin-arm64/next-swc.darwin-arm64.node' not valid for use in process: library load denied by system policy), '/System/Volumes/Preboot/Cryptexes/OS/Users/nishant.patel/MyProj/Resume-Matcher/apps/frontend/node_modules/@next/swc-darwin-arm64/next-swc.darwin-arm64.node' (no such file), '/Users/nishant.patel/MyProj/Resume-Matcher/apps/frontend/node_modules/@next/swc-darwin-arm64/next-swc.darwin-arm64.node' (code signature in <0CAB37FD-C86E-3781-ADF6-78C02171D125> '/Users/nishant.patel/MyProj/Resume-Matcher/apps/frontend/node_modules/@next/swc-darwin-arm64/next-swc.darwin-arm64.node' not valid for use in process: library load denied by system policy)
+⚠ TypeError: fetch failed
+    at ignore-listed frames {
+  [cause]: Error: getaddrinfo ENOTFOUND registry.npmjs.org
+      at ignore-listed frames {
+    errno: -3008,
+    code: 'ENOTFOUND',
+    syscall: 'getaddrinfo',
+    hostname: 'registry.npmjs.org'
+  }
+}
+⨯ Failed to load SWC binary for darwin/arm64, see more info here: https://nextjs.org/docs/messages/failed-loading-swc
+[?25h
