@@ -1,6 +1,7 @@
 # Database files (local data)
 data/*.json
 data/config.json
+data/linkedin/
 !data/.gitkeep
 
 # Config file with API keys - NEVER COMMIT

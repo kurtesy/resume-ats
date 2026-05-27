@@ -97,8 +97,11 @@ async def refine_resume(
                 logger.warning("Keyword injection failed: %s", e)
 
     # Pass 2: AI phrase removal and polish (local, no LLM call)
+    # SVC-013: Guard JD keywords from removal — stripping a word the JD
+    # actually requires (e.g. "scalable") would lower the match score.
+    jd_guard = _build_jd_keyword_guard(job_keywords)
     if config.enable_ai_phrase_removal:
-        current, removed = remove_ai_phrases(current)
+        current, removed = remove_ai_phrases(current, jd_guard)
         ai_phrases_found.extend(removed)
         if removed:
             logger.info("Removed %d AI phrases: %s", len(removed), removed)
@@ -132,6 +135,31 @@ async def refine_resume(
                 # Non-critical violations - fix and continue
                 current = fix_alignment_violations(current, alignment.violations)
                 passes += 1
+
+    # Pass 4: Re-injection retry. Alignment/AI-strip can remove content that
+    # contained JD keywords (e.g. a fabricated bullet mentioning Kafka). If
+    # any newly-missing keyword is still grounded in the master resume,
+    # re-inject once. Bounded to a single retry to keep LLM cost predictable.
+    if config.enable_keyword_injection:
+        retry_analysis = analyze_keyword_gaps(job_keywords, current, master_resume)
+        if retry_analysis.injectable_keywords:
+            logger.info(
+                "Re-injection pass: %d keywords became missing after refinement: %s",
+                len(retry_analysis.injectable_keywords),
+                retry_analysis.injectable_keywords,
+            )
+            try:
+                current = await inject_keywords(
+                    current,
+                    retry_analysis.injectable_keywords,
+                    master_resume,
+                    job_description,
+                )
+                passes += 1
+                # Update keyword_analysis so callers see the final injectable list.
+                keyword_analysis = retry_analysis
+            except Exception as e:
+                logger.warning("Re-injection pass failed: %s", e)
 
     # Calculate final match percentage
     final_match = calculate_keyword_match(current, job_keywords)
@@ -198,7 +226,22 @@ def analyze_keyword_gaps(
     )
 
 
-def remove_ai_phrases(data: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+def _build_jd_keyword_guard(jd_keywords: dict[str, Any] | None) -> set[str]:
+    """Return the set of lowercased JD keyword strings to protect from removal."""
+    if not jd_keywords:
+        return set()
+    guard: set[str] = set()
+    for bucket in ("required_skills", "preferred_skills", "keywords"):
+        for kw in jd_keywords.get(bucket, []) or []:
+            if isinstance(kw, str) and kw.strip():
+                guard.add(kw.strip().lower())
+    return guard
+
+
+def remove_ai_phrases(
+    data: dict[str, Any],
+    jd_keyword_guard: set[str] | None = None,
+) -> tuple[dict[str, Any], list[str]]:
     """Remove AI-generated phrases from resume content.
 
     This is a local operation that doesn't require an LLM call.
@@ -206,16 +249,23 @@ def remove_ai_phrases(data: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
 
     Args:
         data: Resume data dictionary
+        jd_keyword_guard: Lowercased JD keyword strings that must be preserved
+            even if they appear on the AI phrase blacklist. Prevents the
+            refiner from dropping the match score by stripping words the JD
+            actually requires (e.g. "scalable").
 
     Returns:
         Tuple of (cleaned data, list of removed phrases)
     """
+    guard = jd_keyword_guard or set()
     # Use a set to avoid duplicate tracking
     removed: set[str] = set()
 
     def clean_text(text: str) -> str:
         cleaned = text
         for phrase in AI_PHRASE_BLACKLIST:
+            if phrase.lower() in guard:
+                continue
             if phrase.lower() in cleaned.lower():
                 removed.add(phrase)
                 replacement = AI_PHRASE_REPLACEMENTS.get(phrase.lower(), "")
@@ -237,6 +287,44 @@ def remove_ai_phrases(data: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
     return cleaned_data, list(removed)
 
 
+def _normalize_skill(value: str) -> str:
+    """Lowercase, strip trailing version numbers, collapse whitespace.
+
+    "PostgreSQL 14"   -> "postgresql"
+    "Python 3.13.1"   -> "python"
+    "AWS  S3 "        -> "aws s3"
+    """
+    if not isinstance(value, str):
+        return ""
+    v = value.strip().lower()
+    # Strip trailing version like " 14", " 3.13", " 3.13.1". Require leading
+    # whitespace so we don't mangle multi-word names that end in a digit
+    # ("AWS S3", "S2N", "Lambda 3.0" → only " 3.0" should be stripped).
+    v = re.sub(r"\s+\d+(\.\d+)*\s*$", "", v)
+    # Collapse whitespace
+    v = re.sub(r"\s+", " ", v).strip()
+    return v
+
+
+def _is_essentially_in_master(value: str, master_values: set[str]) -> bool:
+    """True if `value` is essentially the same as some master value.
+
+    Same after normalization, or one is a substring of the other (e.g.
+    "postgresql" matches "postgresql 14", "aws" matches "aws lambda").
+    Used to avoid flagging slightly-different phrasings as fabricated and
+    over-removing JD-relevant content.
+    """
+    norm = _normalize_skill(value)
+    if not norm:
+        return False
+    for m in master_values:
+        if not m:
+            continue
+        if norm == m or norm in m or m in norm:
+            return True
+    return False
+
+
 def validate_master_alignment(
     tailored: dict[str, Any],
     master: dict[str, Any],
@@ -255,49 +343,52 @@ def validate_master_alignment(
     """
     violations: list[AlignmentViolation] = []
 
-    # Check skills
-    tailored_skills = set(
-        s.lower()
-        for s in tailored.get("additional", {}).get("technicalSkills", [])
-        if isinstance(s, str)
-    )
-    master_skills = set(
-        s.lower()
+    # Check skills (with fuzzy match — "PostgreSQL 14" should not be flagged
+    # when master has "PostgreSQL"; companies remain strict below).
+    tailored_skills_raw = [
+        s for s in tailored.get("additional", {}).get("technicalSkills", []) if isinstance(s, str)
+    ]
+    master_skills_norm = {
+        _normalize_skill(s)
         for s in master.get("additional", {}).get("technicalSkills", [])
         if isinstance(s, str)
-    )
+    }
+    master_skills_norm.discard("")
 
-    for skill in tailored_skills - master_skills:
-        violations.append(
-            AlignmentViolation(
-                field_path="additional.technicalSkills",
-                violation_type="fabricated_skill",
-                value=skill,
-                severity="critical",
+    for skill in tailored_skills_raw:
+        if not _is_essentially_in_master(skill, master_skills_norm):
+            violations.append(
+                AlignmentViolation(
+                    field_path="additional.technicalSkills",
+                    violation_type="fabricated_skill",
+                    value=skill.lower(),
+                    severity="critical",
+                )
             )
-        )
 
-    # Check certifications
-    tailored_certs = set(
-        c.lower()
+    # Check certifications (same fuzzy match as skills)
+    tailored_certs_raw = [
+        c
         for c in tailored.get("additional", {}).get("certificationsTraining", [])
         if isinstance(c, str)
-    )
-    master_certs = set(
-        c.lower()
+    ]
+    master_certs_norm = {
+        _normalize_skill(c)
         for c in master.get("additional", {}).get("certificationsTraining", [])
         if isinstance(c, str)
-    )
+    }
+    master_certs_norm.discard("")
 
-    for cert in tailored_certs - master_certs:
-        violations.append(
-            AlignmentViolation(
-                field_path="additional.certificationsTraining",
-                violation_type="fabricated_cert",
-                value=cert,
-                severity="critical",
+    for cert in tailored_certs_raw:
+        if not _is_essentially_in_master(cert, master_certs_norm):
+            violations.append(
+                AlignmentViolation(
+                    field_path="additional.certificationsTraining",
+                    violation_type="fabricated_cert",
+                    value=cert.lower(),
+                    severity="critical",
+                )
             )
-        )
 
     # Check work experience companies (should not add new companies)
     tailored_companies = set(

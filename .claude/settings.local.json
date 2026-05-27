@@ -21,7 +21,32 @@
       "Bash(export PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\")",
       "Bash(node:*)",
       "Bash(npm --version)",
-      "Bash(source:*)"
+      "Bash(source:*)",
+      "Bash(chmod +x /Users/nishant.patel/MyProj/Resume-Matcher/.claude/skills/linkedin-apply/scripts/tailor.py)",
+      "Bash(curl -fsS http://localhost:8000/api/v1/health)",
+      "Bash(curl -fsS \"http://localhost:8000/api/v1/resumes/list?include_master=true\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(r.get\\('is_master'\\), r.get\\('resume_id'\\), r.get\\('filename'\\)\\) for r in d.get\\('data',[]\\)]\")",
+      "mcp__chrome-devtools__new_page",
+      "mcp__chrome-devtools__list_pages",
+      "mcp__chrome-devtools__navigate_page",
+      "Bash(curl -s --max-time 2 http://127.0.0.1:9222/json/version)",
+      "mcp__chrome-devtools__wait_for",
+      "mcp__chrome-devtools__evaluate_script",
+      "Bash(python3 .claude/skills/linkedin-apply/scripts/tailor.py --job-id 4409046710 --jd-file /tmp/linkedin-jd-4409046710.txt --url https://www.linkedin.com/jobs/view/4409046710/ --title 'Senior Python Engineer \\(m/f/d\\) - Network Planning' --company Flix)",
+      "Bash(curl -sS --max-time 3 -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(curl -sS --max-time 5 -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(lsof -nP -iTCP:3000 -sTCP:LISTEN)",
+      "Bash(curl -sS -o /Users/nishant.patel/MyProj/Resume-Matcher/apps/backend/data/linkedin/4409046710/resume.pdf -w \"http=%{http_code} bytes=%{size_download}\\\\n\" \"http://localhost:8000/api/v1/resumes/58c2cc4c-c262-402c-aacc-8240c25bcb79/pdf\" --max-time 180)",
+      "Bash(python3 -m py_compile /Users/nishant.patel/MyProj/Resume-Matcher/.claude/skills/linkedin-apply/scripts/tailor.py)",
+      "Bash(python3 /Users/nishant.patel/MyProj/Resume-Matcher/.claude/skills/linkedin-apply/scripts/tailor.py --help)",
+      "Bash(curl -fsS -o /dev/null http://localhost:3000/)",
+      "Bash(python3 /Users/nishant.patel/MyProj/Resume-Matcher/.claude/skills/linkedin-apply/scripts/tailor.py --job-id 4409046710 --jd-file /tmp/linkedin-jd-4409046710.txt --url https://www.linkedin.com/jobs/view/4409046710/ --title 'Senior Python Engineer \\(m/f/d\\) - Network Planning' --company Flix)",
+      "Bash(python -m py_compile app/services/refiner.py)",
+      "Bash(python3 -m py_compile app/services/refiner.py)",
+      "Bash(uv run *)",
+      "Bash(uv sync *)",
+      "Bash(curl -fsS \"http://localhost:8000/api/v1/jobs/7e9cb230-131b-4f86-b9eb-5fcfc8e586db\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); kw=d.get\\('job_keywords',{}\\); print\\('required:', kw.get\\('required_skills'\\)\\); print\\('preferred:', kw.get\\('preferred_skills'\\)\\); print\\('keywords:', kw.get\\('keywords'\\)\\)\")"
     ]
   }
 }
