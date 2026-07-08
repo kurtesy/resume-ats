@@ -130,10 +130,11 @@ export default function ApiKeyMenu(): React.ReactElement {
                 type="button"
                 onClick={handleSave}
                 disabled={status === 'saving'}
-                className={`rounded-none border-2 border-black px-4 py-2 text-xs font-semibold transition-all ${status === 'saving'
+                className={`rounded-none border-2 border-black px-4 py-2 text-xs font-semibold transition-all ${
+                  status === 'saving'
                     ? 'bg-gray-300 text-gray-600 cursor-wait'
                     : 'bg-blue-700 text-white shadow-[2px_2px_0px_0px_#000000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none'
-                  }`}
+                }`}
               >
                 {status === 'saving' ? t('common.saving') : t('common.save')}
               </button>

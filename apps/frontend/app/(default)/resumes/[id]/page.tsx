@@ -227,12 +227,13 @@ export default function ResumeViewerPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F0F0E8] p-4">
         <div
-          className={`border p-6 text-center max-w-md shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] ${isProcessing
+          className={`border p-6 text-center max-w-md shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] ${
+            isProcessing
               ? 'bg-blue-50 border-blue-200'
               : isFailed
                 ? 'bg-orange-50 border-orange-200'
                 : 'bg-red-50 border-red-200'
-            }`}
+          }`}
         >
           <div className="flex justify-center mb-4">
             {isProcessing ? (
@@ -244,8 +245,9 @@ export default function ResumeViewerPage() {
             )}
           </div>
           <p
-            className={`font-bold mb-4 ${isProcessing ? 'text-blue-700' : isFailed ? 'text-orange-700' : 'text-red-700'
-              }`}
+            className={`font-bold mb-4 ${
+              isProcessing ? 'text-blue-700' : isFailed ? 'text-orange-700' : 'text-red-700'
+            }`}
           >
             {error || t('resumeViewer.resumeNotFound')}
           </p>

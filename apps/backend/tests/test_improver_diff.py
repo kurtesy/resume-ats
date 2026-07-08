@@ -1,4 +1,4 @@
-from app.services.improver import calculate_resume_diff
+from app.core import calculate_resume_diff
 
 
 def test_skill_add_remove_case_insensitive() -> None:

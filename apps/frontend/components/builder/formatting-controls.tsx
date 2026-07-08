@@ -178,10 +178,11 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                 <button
                   key={template.id}
                   onClick={() => handleTemplateChange(template.id)}
-                  className={`group flex flex-col items-center p-2 border transition-all ${settings.template === template.id
+                  className={`group flex flex-col items-center p-2 border transition-all ${
+                    settings.template === template.id
                       ? 'border-blue-700 bg-white shadow-[2px_2px_0px_0px_#1D4ED8]'
                       : 'border-black bg-white hover:bg-gray-50 hover:shadow-[1px_1px_0px_0px_#000]'
-                    }`}
+                  }`}
                   title={templateLabels[template.id].description}
                 >
                   <div className="w-12 h-16 mb-1.5 flex items-center justify-center">
@@ -191,8 +192,9 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                     />
                   </div>
                   <span
-                    className={`font-mono text-[9px] uppercase tracking-wider font-bold ${settings.template === template.id ? 'text-blue-700' : 'text-gray-700'
-                      }`}
+                    className={`font-mono text-[9px] uppercase tracking-wider font-bold ${
+                      settings.template === template.id ? 'text-blue-700' : 'text-gray-700'
+                    }`}
                   >
                     {templateLabels[template.id].name}
                   </span>
@@ -212,10 +214,11 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                   <button
                     key={color}
                     onClick={() => handleAccentColorChange(color)}
-                    className={`flex items-center gap-2 px-3 py-2 border font-mono text-xs transition-all ${settings.accentColor === color
+                    className={`flex items-center gap-2 px-3 py-2 border font-mono text-xs transition-all ${
+                      settings.accentColor === color
                         ? 'border-blue-700 bg-white shadow-[2px_2px_0px_0px_#1D4ED8]'
                         : 'border-black bg-white hover:bg-gray-50'
-                      }`}
+                    }`}
                     title={t(`builder.formatting.accentColors.${color}`)}
                   >
                     <span
@@ -239,10 +242,11 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                 <button
                   key={size}
                   onClick={() => handlePageSizeChange(size)}
-                  className={`flex-1 px-3 py-2 border font-mono text-xs transition-all ${settings.pageSize === size
+                  className={`flex-1 px-3 py-2 border font-mono text-xs transition-all ${
+                    settings.pageSize === size
                       ? 'border-blue-700 bg-white text-blue-700 shadow-[2px_2px_0px_0px_#1D4ED8]'
                       : 'border-black bg-white text-gray-600 hover:bg-gray-50'
-                    }`}
+                  }`}
                   title={PAGE_SIZE_INFO[size].dimensions}
                 >
                   <div className="font-bold">
@@ -333,10 +337,11 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                     <button
                       key={font}
                       onClick={() => handleHeaderFontChange(font)}
-                      className={`px-2 py-1 font-mono text-xs border transition-all ${settings.fontSize.headerFont === font
+                      className={`px-2 py-1 font-mono text-xs border transition-all ${
+                        settings.fontSize.headerFont === font
                           ? 'bg-blue-700 text-white border-blue-700 shadow-[1px_1px_0px_0px_#000]'
                           : 'bg-white text-gray-700 border-gray-300 hover:border-black'
-                        }`}
+                      }`}
                       style={{
                         fontFamily:
                           font === 'serif'
@@ -361,10 +366,11 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                     <button
                       key={font}
                       onClick={() => handleBodyFontChange(font)}
-                      className={`px-2 py-1 font-mono text-xs border transition-all ${settings.fontSize.bodyFont === font
+                      className={`px-2 py-1 font-mono text-xs border transition-all ${
+                        settings.fontSize.bodyFont === font
                           ? 'bg-blue-700 text-white border-blue-700 shadow-[1px_1px_0px_0px_#000]'
                           : 'bg-white text-gray-700 border-gray-300 hover:border-black'
-                        }`}
+                      }`}
                       style={{
                         fontFamily:
                           font === 'serif'
@@ -392,14 +398,16 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
               <label className="flex items-center gap-3 cursor-pointer">
                 <button
                   onClick={handleCompactModeToggle}
-                  className={`relative w-10 h-5 border-2 transition-all ${settings.compactMode
+                  className={`relative w-10 h-5 border-2 transition-all ${
+                    settings.compactMode
                       ? 'bg-blue-700 border-blue-700'
                       : 'bg-white border-gray-400'
-                    }`}
+                  }`}
                 >
                   <span
-                    className={`absolute top-0.5 w-3.5 h-3.5 bg-white border transition-all ${settings.compactMode ? 'left-5 border-blue-700' : 'left-0.5 border-gray-400'
-                      }`}
+                    className={`absolute top-0.5 w-3.5 h-3.5 bg-white border transition-all ${
+                      settings.compactMode ? 'left-5 border-blue-700' : 'left-0.5 border-gray-400'
+                    }`}
                   />
                 </button>
                 <span className="font-mono text-xs text-gray-700">
@@ -411,16 +419,18 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
               <label className="flex items-center gap-3 cursor-pointer">
                 <button
                   onClick={handleShowContactIconsToggle}
-                  className={`relative w-10 h-5 border-2 transition-all ${settings.showContactIcons
+                  className={`relative w-10 h-5 border-2 transition-all ${
+                    settings.showContactIcons
                       ? 'bg-blue-700 border-blue-700'
                       : 'bg-white border-gray-400'
-                    }`}
+                  }`}
                 >
                   <span
-                    className={`absolute top-0.5 w-3.5 h-3.5 bg-white border transition-all ${settings.showContactIcons
+                    className={`absolute top-0.5 w-3.5 h-3.5 bg-white border transition-all ${
+                      settings.showContactIcons
                         ? 'left-5 border-blue-700'
                         : 'left-0.5 border-gray-400'
-                      }`}
+                    }`}
                   />
                 </button>
                 <span className="font-mono text-xs text-gray-700">
@@ -549,10 +559,11 @@ const SpacingSelector: React.FC<SpacingSelectorProps> = ({ label, value, onChang
           <button
             key={level}
             onClick={() => onChange(level)}
-            className={`w-6 h-6 font-mono text-xs border transition-all ${value === level
+            className={`w-6 h-6 font-mono text-xs border transition-all ${
+              value === level
                 ? 'bg-blue-700 text-white border-blue-700 shadow-[1px_1px_0px_0px_#000]'
                 : 'bg-white text-gray-700 border-gray-300 hover:border-black'
-              }`}
+            }`}
           >
             {level}
           </button>

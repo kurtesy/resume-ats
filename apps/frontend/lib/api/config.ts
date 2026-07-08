@@ -288,13 +288,13 @@ export interface ApiKeysUpdateResponse {
 
 // Provider display names for API keys
 export const API_KEY_PROVIDER_INFO: Record<ApiKeyProvider, { name: string; description: string }> =
-{
-  openai: { name: 'OpenAI', description: 'GPT-4, GPT-4o, etc.' },
-  anthropic: { name: 'Anthropic', description: 'Claude 3.5, Claude 4, etc.' },
-  google: { name: 'Google', description: 'Gemini 1.5, Gemini 2, etc.' },
-  openrouter: { name: 'OpenRouter', description: 'Access multiple providers' },
-  deepseek: { name: 'DeepSeek', description: 'DeepSeek chat models' },
-};
+  {
+    openai: { name: 'OpenAI', description: 'GPT-4, GPT-4o, etc.' },
+    anthropic: { name: 'Anthropic', description: 'Claude 3.5, Claude 4, etc.' },
+    google: { name: 'Google', description: 'Gemini 1.5, Gemini 2, etc.' },
+    openrouter: { name: 'OpenRouter', description: 'Access multiple providers' },
+    deepseek: { name: 'DeepSeek', description: 'DeepSeek chat models' },
+  };
 
 // Fetch API key status for all providers
 export async function fetchApiKeyStatus(): Promise<ApiKeyStatusResponse> {
