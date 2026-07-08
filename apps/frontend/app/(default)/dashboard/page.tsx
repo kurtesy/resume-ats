@@ -31,7 +31,7 @@ import { useStatusCache } from '@/lib/context/status-cache';
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed' | 'loading';
 
 export default function DashboardPage() {
-  const { t, locale } = useTranslations();
+  const { t } = useTranslations();
   const [masterResumeId, setMasterResumeId] = useState<string | null>(null);
   const [processingStatus, setProcessingStatus] = useState<ProcessingStatus>('loading');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -65,8 +65,7 @@ export default function DashboardPage() {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return t('common.unknown');
 
-    const dateLocale =
-      locale === 'es' ? 'es-ES' : locale === 'zh' ? 'zh-CN' : locale === 'ja' ? 'ja-JP' : 'en-US';
+    const dateLocale = 'en-US';
 
     return date.toLocaleDateString(dateLocale, {
       month: 'short',

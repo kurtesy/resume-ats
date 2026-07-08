@@ -1,4 +1,4 @@
-"""FastAPI application entry point containing all core endpoints."""
+"""FastAPI application entry point containing all core endpoints with multi-user SQLite support."""
 
 import asyncio
 import logging
@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, HTTPException, BackgroundTasks
+from fastapi import Depends, FastAPI, HTTPException, BackgroundTasks, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
@@ -44,6 +44,8 @@ from app.schemas import (
     UpdateOutreachMessageRequest,
     UpdateTitleRequest,
     ResetDatabaseRequest,
+    ScrapeJobRequest,
+    ScrapeJobResponse,
 )
 from app.core import (
     db,
@@ -54,6 +56,8 @@ from app.core import (
     generate_job_title,
     improve_resume,
     calculate_resume_diff,
+    parse_document,
+    scrape_linkedin_job,
 )
 
 logger = logging.getLogger("app")
@@ -87,17 +91,17 @@ app.add_middleware(
 )
 
 # Helpers
-async def run_resume_processing(resume_id: str, content: str) -> None:
+async def run_resume_processing(resume_id: str, content: str, username: str = "default") -> None:
     try:
-        db.update_resume(resume_id, {"processing_status": "processing"})
+        db.update_resume(resume_id, {"processing_status": "processing"}, username=username)
         parsed = await parse_resume_to_json(content)
         db.update_resume(resume_id, {
             "processed_data": parsed,
             "processing_status": "ready"
-        })
+        }, username=username)
     except Exception as e:
-        logger.error(f"Failed to process resume {resume_id}: {e}")
-        db.update_resume(resume_id, {"processing_status": "failed"})
+        logger.error(f"Failed to process resume {resume_id} for user {username}: {e}")
+        db.update_resume(resume_id, {"processing_status": "failed"}, username=username)
 
 # ------------------------------------------
 # HEALTH / SYSTEM ENDPOINTS
@@ -126,16 +130,16 @@ async def health():
     )
 
 @app.get("/api/v1/status", response_model=StatusResponse)
-async def status():
+async def status(username: str = "default"):
     cfg = get_llm_config()
     health_check = await check_llm_health(cfg)
-    master = db.get_master_resume()
+    master = db.get_master_resume(username=username)
     return StatusResponse(
         status="healthy",
         llm_configured=bool(cfg.api_key or cfg.provider == "ollama"),
         llm_healthy=health_check.get("healthy", False),
         has_master_resume=master is not None,
-        database_stats=db.get_stats()
+        database_stats=db.get_stats(username=username)
     )
 
 # ------------------------------------------
@@ -282,31 +286,43 @@ async def post_config_api_keys(req: ApiKeysUpdateRequest):
     return ApiKeysUpdateResponse(message="API keys updated", updated_providers=updated)
 
 @app.post("/api/v1/config/reset")
-async def post_config_reset(req: ResetDatabaseRequest):
+async def post_config_reset(req: ResetDatabaseRequest, username: str = "default"):
     if not req.confirm or req.confirm.lower() != "confirm":
         raise HTTPException(status_code=400, detail="Must provide confirmation")
-    db.reset_database()
-    return {"message": "Database and config reset complete"}
+    db.reset_database(username=username)
+    return {"message": f"Database and config reset complete for user {username}"}
 
 # ------------------------------------------
 # RESUMES ENDPOINTS
 # ------------------------------------------
 
 @app.post("/api/v1/resumes/upload", response_model=ResumeUploadResponse)
-async def upload_resume(payload: dict[str, Any], background_tasks: BackgroundTasks):
-    # Support both multipart (file-like) uploads and raw text bodies.
-    # The frontend payload here contains "content" (the markdown or text resume) and optional "filename".
-    content = payload.get("content", "")
-    filename = payload.get("filename", "resume.md")
-    if not content.strip():
-        raise HTTPException(status_code=400, detail="Resume content is empty")
+async def upload_resume(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    username: str = "default",
+):
+    try:
+        content_bytes = await file.read()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to read file: {e}")
+        
+    if not content_bytes:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty")
+
+    try:
+        markdown_content = await parse_document(content_bytes, file.filename or "resume.pdf")
+    except Exception as e:
+        logger.error(f"Failed to parse document: {e}")
+        raise HTTPException(status_code=422, detail="Failed to parse document. Please upload a valid PDF or DOCX.")
 
     resume_doc = await db.create_resume_atomic_master(
-        content=content,
-        filename=filename,
-        processing_status="pending"
+        content=markdown_content,
+        filename=file.filename or "resume.md",
+        processing_status="pending",
+        username=username
     )
-    background_tasks.add_task(run_resume_processing, resume_doc["resume_id"], content)
+    background_tasks.add_task(run_resume_processing, resume_doc["resume_id"], markdown_content, username)
     return ResumeUploadResponse(
         message="Resume upload received and processing started",
         request_id=str(uuid4()),
@@ -316,8 +332,8 @@ async def upload_resume(payload: dict[str, Any], background_tasks: BackgroundTas
     )
 
 @app.get("/api/v1/resumes/list", response_model=ResumeListResponse)
-async def list_resumes():
-    resumes = db.list_resumes()
+async def list_resumes(username: str = "default"):
+    resumes = db.list_resumes(username=username)
     summaries = []
     for r in resumes:
         summaries.append(ResumeSummary(
@@ -333,10 +349,10 @@ async def list_resumes():
     return ResumeListResponse(request_id=str(uuid4()), data=summaries)
 
 @app.get("/api/v1/resumes", response_model=ResumeFetchResponse)
-async def get_resume_by_query(resume_id: str | None = None):
+async def get_resume_by_query(resume_id: str | None = None, username: str = "default"):
     if not resume_id:
         raise HTTPException(status_code=400, detail="Missing resume_id query parameter")
-    r = db.get_resume(resume_id)
+    r = db.get_resume(resume_id, username=username)
     if not r:
         raise HTTPException(status_code=404, detail="Resume not found")
     processed = None
@@ -365,12 +381,12 @@ async def get_resume_by_query(resume_id: str | None = None):
     )
 
 @app.get("/api/v1/resumes/{resume_id}", response_model=ResumeFetchResponse)
-async def get_resume(resume_id: str):
-    return await get_resume_by_query(resume_id=resume_id)
+async def get_resume(resume_id: str, username: str = "default"):
+    return await get_resume_by_query(resume_id=resume_id, username=username)
 
 @app.patch("/api/v1/resumes/{resume_id}", response_model=ResumeFetchResponse)
-async def patch_resume(resume_id: str, updates: dict[str, Any]):
-    r = db.get_resume(resume_id)
+async def patch_resume(resume_id: str, updates: dict[str, Any], username: str = "default"):
+    r = db.get_resume(resume_id, username=username)
     if not r:
         raise HTTPException(status_code=404, detail="Resume not found")
     
@@ -388,22 +404,23 @@ async def patch_resume(resume_id: str, updates: dict[str, Any]):
         raise HTTPException(status_code=422, detail=f"Invalid resume format: {e}")
 
     # Save to database
-    db.update_resume(resume_id, {"processed_data": validated.model_dump()})
-    return await get_resume(resume_id)
+    db.update_resume(resume_id, {"processed_data": validated.model_dump()}, username=username)
+    return await get_resume(resume_id, username=username)
 
 @app.delete("/api/v1/resumes/{resume_id}")
-async def delete_resume(resume_id: str):
-    success = db.delete_resume(resume_id)
+async def delete_resume(resume_id: str, username: str = "default"):
+    success = db.delete_resume(resume_id, username=username)
     if not success:
         raise HTTPException(status_code=404, detail="Resume not found")
     return {"message": f"Resume {resume_id} deleted successfully"}
 
+@app.post("/api/v1/resumes/improve/preview", response_model=ImproveResumeResponse)
 @app.post("/api/v1/resumes/improve", response_model=ImproveResumeResponse)
-async def improve_resume_endpoint(req: ImproveResumeRequest):
-    res = db.get_resume(req.resume_id)
+async def improve_resume_endpoint(req: ImproveResumeRequest, username: str = "default"):
+    res = db.get_resume(req.resume_id, username=username)
     if not res:
         raise HTTPException(status_code=404, detail="Resume not found")
-    job = db.get_job(req.job_id)
+    job = db.get_job(req.job_id, username=username)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -435,11 +452,11 @@ async def improve_resume_endpoint(req: ImproveResumeRequest):
         raise HTTPException(status_code=500, detail="Tailoring failed. Please check LLM keys and try again.")
 
 @app.post("/api/v1/resumes/improve/confirm", response_model=ImproveResumeResponse)
-async def confirm_improve(req: ImproveResumeConfirmRequest):
-    orig = db.get_resume(req.resume_id)
+async def confirm_improve(req: ImproveResumeConfirmRequest, username: str = "default"):
+    orig = db.get_resume(req.resume_id, username=username)
     if not orig:
         raise HTTPException(status_code=404, detail="Original resume not found")
-    job = db.get_job(req.job_id)
+    job = db.get_job(req.job_id, username=username)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -452,7 +469,8 @@ async def confirm_improve(req: ImproveResumeConfirmRequest):
         parent_id=req.resume_id,
         processed_data=req.improved_data.model_dump(),
         processing_status="ready",
-        title=title
+        title=title,
+        username=username
     )
 
     # Save improvement record
@@ -460,7 +478,8 @@ async def confirm_improve(req: ImproveResumeConfirmRequest):
         original_resume_id=req.resume_id,
         tailored_resume_id=tailored["resume_id"],
         job_id=req.job_id,
-        improvements=[imp.model_dump() for idx, imp in enumerate(req.improvements)]
+        improvements=[imp.model_dump() for idx, imp in enumerate(req.improvements)],
+        username=username
     )
 
     preview_data = ImproveResumeData(
@@ -473,34 +492,75 @@ async def confirm_improve(req: ImproveResumeConfirmRequest):
     )
     return ImproveResumeResponse(request_id=preview_data.request_id, data=preview_data)
 
+@app.post("/api/v1/resumes/{resume_id}/retry-processing", response_model=ResumeUploadResponse)
+async def retry_processing(resume_id: str, background_tasks: BackgroundTasks, username: str = "default"):
+    rer = db.get_resume(resume_id, username=username)
+    import pdb; pdb.set_trace()
+    if not rer:
+        raise HTTPException(status_code=404, detail="Resume not found")
+    
+    if rer.get("processing_status") not in ("failed", "processing", "pending", "ready"):
+        raise HTTPException(
+            status_code=400,
+            detail="Only resumes with 'failed', 'pending', or 'processing' status can be retried."
+        )
+        
+    markdown_content = rer.get("content", "")
+    if not markdown_content:
+        raise HTTPException(
+            status_code=400,
+            detail="Resume has no stored content to re-process."
+        )
+        
+    # Update status to pending
+    db.update_resume(resume_id, {"processing_status": "pending"}, username=username)
+    
+    background_tasks.add_task(run_resume_processing, resume_id, markdown_content, username)
+    return ResumeUploadResponse(
+        message="Retry processing started",
+        request_id=str(uuid4()),
+        resume_id=resume_id,
+        processing_status="pending",
+        is_master=rer.get("is_master", False)
+    )
+
 # Backward-compatibility stubs for UI operations
 @app.patch("/api/v1/resumes/{resume_id}/cover-letter")
-async def update_cover_letter(resume_id: str, req: UpdateCoverLetterRequest):
-    db.update_resume(resume_id, {"cover_letter": req.content})
+async def update_cover_letter(resume_id: str, req: UpdateCoverLetterRequest, username: str = "default"):
+    db.update_resume(resume_id, {"cover_letter": req.content}, username=username)
     return {"message": "Cover letter updated successfully"}
 
 @app.patch("/api/v1/resumes/{resume_id}/outreach-message")
-async def update_outreach_message(resume_id: str, req: UpdateOutreachMessageRequest):
-    db.update_resume(resume_id, {"outreach_message": req.content})
+async def update_outreach_message(resume_id: str, req: UpdateOutreachMessageRequest, username: str = "default"):
+    db.update_resume(resume_id, {"outreach_message": req.content}, username=username)
     return {"message": "Outreach message updated successfully"}
 
 @app.patch("/api/v1/resumes/{resume_id}/title")
-async def update_title(resume_id: str, req: UpdateTitleRequest):
-    db.update_resume(resume_id, {"title": req.title})
+async def update_title(resume_id: str, req: UpdateTitleRequest, username: str = "default"):
+    db.update_resume(resume_id, {"title": req.title}, username=username)
     return {"message": "Title updated successfully"}
 
 # ------------------------------------------
 # JOBS ENDPOINTS
 # ------------------------------------------
 
+@app.post("/api/v1/jobs/scrape", response_model=ScrapeJobResponse)
+async def scrape_job(req: ScrapeJobRequest):
+    try:
+        desc = await scrape_linkedin_job(req.url)
+        return ScrapeJobResponse(description=desc)
+    except Exception as e:
+        logger.error(f"Scraping failed for URL {req.url}: {e}")
+        raise HTTPException(status_code=422, detail=f"Failed to parse LinkedIn job URL: {e}")
+
 @app.post("/api/v1/jobs/upload", response_model=JobUploadResponse)
-async def upload_job(req: JobUploadRequest):
+async def upload_job(req: JobUploadRequest, username: str = "default"):
     if not req.job_descriptions:
         raise HTTPException(status_code=400, detail="No job descriptions provided")
     
     # Store first job description
     content = req.job_descriptions[0]
-    job_doc = db.create_job(content=content, resume_id=req.resume_id)
+    job_doc = db.create_job(content=content, resume_id=req.resume_id, username=username)
     return JobUploadResponse(
         message="Job description uploaded successfully",
         job_id=[job_doc["job_id"]],
@@ -508,8 +568,8 @@ async def upload_job(req: JobUploadRequest):
     )
 
 @app.get("/api/v1/jobs/{job_id}")
-async def get_job_endpoint(job_id: str):
-    j = db.get_job(job_id)
+async def get_job_endpoint(job_id: str, username: str = "default"):
+    j = db.get_job(job_id, username=username)
     if not j:
         raise HTTPException(status_code=404, detail="Job not found")
     return j

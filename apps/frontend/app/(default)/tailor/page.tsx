@@ -12,6 +12,7 @@ import {
   uploadJobDescriptions,
   previewImproveResume,
   confirmImproveResume,
+  scrapeJobUrl,
 } from '@/lib/api/resume';
 import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { Dropdown } from '@/components/ui/dropdown';
@@ -24,6 +25,8 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 export default function TailorPage() {
   const { t } = useTranslations();
   const [jobDescription, setJobDescription] = useState('');
+  const [jobUrl, setJobUrl] = useState('');
+  const [isScraping, setIsScraping] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [masterResumeId, setMasterResumeId] = useState<string | null>(null);
@@ -191,6 +194,24 @@ export default function TailorPage() {
       } else {
         setError(t('tailor.errors.failedToPreview'));
       }
+    }
+  };
+
+  const handleScrapeJobUrl = async () => {
+    const trimmedUrl = jobUrl.trim();
+    if (!trimmedUrl) return;
+
+    setIsScraping(true);
+    setError(null);
+    try {
+      const parsedDesc = await scrapeJobUrl(trimmedUrl);
+      setJobDescription(parsedDesc);
+    } catch (err: unknown) {
+      console.error(err);
+      const msg = err instanceof Error ? err.message : 'Failed to fetch job description from URL.';
+      setError(msg);
+    } finally {
+      setIsScraping(false);
     }
   };
 
@@ -383,6 +404,41 @@ export default function TailorPage() {
             description={t('tailor.promptDescription')}
             disabled={isLoading || promptLoading}
           />
+
+          {/* LinkedIn URL Scraper Input */}
+          <div className="border-2 border-black p-4 bg-[#F0F0E8] space-y-3">
+            <label className="block text-xs font-mono font-bold uppercase tracking-wider text-blue-700">
+              ⚡ LinkedIn Job URL Parser (ATS Booster)
+            </label>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                placeholder="Paste LinkedIn Job URL (e.g., https://www.linkedin.com/jobs/view/...)"
+                value={jobUrl}
+                onChange={(e) => setJobUrl(e.target.value)}
+                disabled={isLoading || isScraping}
+                className="flex-grow font-mono text-xs bg-white border-2 border-black focus:outline-none focus:border-blue-700 px-3 py-2 rounded-none"
+              />
+              <Button
+                onClick={handleScrapeJobUrl}
+                disabled={isLoading || isScraping || !jobUrl.trim()}
+                className="rounded-none bg-blue-700 text-white font-mono text-xs uppercase font-bold hover:bg-blue-800 shrink-0"
+              >
+                {isScraping ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                    Fetching...
+                  </>
+                ) : (
+                  'Fetch Description'
+                )}
+              </Button>
+            </div>
+            <p className="text-[10px] font-mono text-gray-500">
+              Appends direct URL content into the textarea below and applies high-signal ATS
+              optimizations automatically.
+            </p>
+          </div>
 
           <div className="relative">
             <Textarea

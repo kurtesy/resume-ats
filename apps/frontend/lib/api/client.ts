@@ -48,6 +48,15 @@ export async function apiFetch(endpoint: string, options?: RequestInit): Promise
     url = resolveRuntimeApiBase(normalizedEndpoint);
   }
 
+  // Automatically inject username query parameter from localStorage if available in the browser
+  if (typeof window !== 'undefined') {
+    const username = localStorage.getItem('username');
+    if (username) {
+      const separator = url.includes('?') ? '&' : '?';
+      url = `${url}${separator}username=${encodeURIComponent(username)}`;
+    }
+  }
+
   return fetch(url, options);
 }
 
@@ -95,5 +104,12 @@ export async function apiDelete(endpoint: string): Promise<Response> {
  * Builds the full upload URL for file uploads.
  */
 export function getUploadUrl(): string {
-  return `${API_BASE}/resumes/upload`;
+  let url = `${API_BASE}/resumes/upload`;
+  if (typeof window !== 'undefined') {
+    const username = localStorage.getItem('username');
+    if (username) {
+      url = `${url}?username=${encodeURIComponent(username)}`;
+    }
+  }
+  return url;
 }

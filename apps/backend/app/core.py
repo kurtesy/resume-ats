@@ -1,16 +1,19 @@
 """Database wrapper, LiteLLM wrapper, and resume tailoring/improvement core logic."""
 
 import asyncio
-import copy
 import json
 import logging
 import re
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Literal, Callable
+from typing import Any
 from uuid import uuid4
 from difflib import SequenceMatcher
 from dataclasses import dataclass
+
+from markitdown import MarkItDown
+from playwright.async_api import async_playwright
 
 from tinydb import Query, TinyDB
 from tinydb.table import Table
@@ -27,43 +30,75 @@ from app.schemas import (
 
 logger = logging.getLogger(__name__)
 
+from sqlalchemy import create_engine, Column, String, Boolean, JSON, Integer, Text, DateTime
+from sqlalchemy.orm import declarative_base, sessionmaker
+
 # ==========================================
-# 1. DATABASE LAYER (TINYDB WRAPPER)
+# 1. DATABASE LAYER (SQLALCHEMY SQLITE)
 # ==========================================
 
+db_url = f"sqlite:///{settings.data_dir}/database.sqlite"
+engine = create_engine(db_url, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+class ResumeModel(Base):
+    __tablename__ = "resumes"
+    
+    resume_id = Column(String, primary_key=True, index=True)
+    username = Column(String, default="default", index=True)
+    content = Column(Text, nullable=False)
+    content_type = Column(String, default="md")
+    filename = Column(String, nullable=True)
+    is_master = Column(Boolean, default=False)
+    parent_id = Column(String, nullable=True)
+    processed_data = Column(JSON, nullable=True)
+    processing_status = Column(String, default="pending")
+    cover_letter = Column(Text, nullable=True)
+    outreach_message = Column(Text, nullable=True)
+    title = Column(String, nullable=True)
+    created_at = Column(String, nullable=False)
+    updated_at = Column(String, nullable=False)
+
+class JobModel(Base):
+    __tablename__ = "jobs"
+    
+    job_id = Column(String, primary_key=True, index=True)
+    username = Column(String, default="default", index=True)
+    content = Column(Text, nullable=False)
+    resume_id = Column(String, nullable=True)
+    created_at = Column(String, nullable=False)
+
+class ImprovementModel(Base):
+    __tablename__ = "improvements"
+    
+    request_id = Column(String, primary_key=True, index=True)
+    username = Column(String, default="default", index=True)
+    original_resume_id = Column(String, nullable=False)
+    tailored_resume_id = Column(String, nullable=False)
+    job_id = Column(String, nullable=False)
+    improvements = Column(JSON, nullable=False)
+    created_at = Column(String, nullable=False)
+
+def _model_to_dict(model_instance) -> dict[str, Any] | None:
+    if not model_instance:
+        return None
+    d = {}
+    for column in model_instance.__table__.columns:
+        d[column.name] = getattr(model_instance, column.name)
+    return d
+
 class Database:
-    """TinyDB wrapper for resume matcher data."""
+    """SQLAlchemy SQLite wrapper for resume matcher data."""
 
     _master_resume_lock = asyncio.Lock()
 
-    def __init__(self, db_path: Path | None = None):
-        self.db_path = db_path or settings.db_path
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        self._db: TinyDB | None = None
-
-    @property
-    def db(self) -> TinyDB:
-        """Lazy initialization of TinyDB instance."""
-        if self._db is None:
-            self._db = TinyDB(self.db_path)
-        return self._db
-
-    @property
-    def resumes(self) -> Table:
-        return self.db.table("resumes")
-
-    @property
-    def jobs(self) -> Table:
-        return self.db.table("jobs")
-
-    @property
-    def improvements(self) -> Table:
-        return self.db.table("improvements")
+    def __init__(self):
+        settings.data_dir.mkdir(parents=True, exist_ok=True)
+        Base.metadata.create_all(bind=engine)
 
     def close(self) -> None:
-        if self._db is not None:
-            self._db.close()
-            self._db = None
+        pass
 
     def create_resume(
         self,
@@ -77,27 +112,32 @@ class Database:
         cover_letter: str | None = None,
         outreach_message: str | None = None,
         title: str | None = None,
+        username: str = "default",
     ) -> dict[str, Any]:
         resume_id = str(uuid4())
         now = datetime.now(timezone.utc).isoformat()
-
-        doc = {
-            "resume_id": resume_id,
-            "content": content,
-            "content_type": content_type,
-            "filename": filename,
-            "is_master": is_master,
-            "parent_id": parent_id,
-            "processed_data": processed_data,
-            "processing_status": processing_status,
-            "cover_letter": cover_letter,
-            "outreach_message": outreach_message,
-            "title": title,
-            "created_at": now,
-            "updated_at": now,
-        }
-        self.resumes.insert(doc)
-        return doc
+        
+        db_resume = ResumeModel(
+            resume_id=resume_id,
+            username=username,
+            content=content,
+            content_type=content_type,
+            filename=filename,
+            is_master=is_master,
+            parent_id=parent_id,
+            processed_data=processed_data,
+            processing_status=processing_status,
+            cover_letter=cover_letter,
+            outreach_message=outreach_message,
+            title=title,
+            created_at=now,
+            updated_at=now,
+        )
+        
+        with SessionLocal() as session:
+            session.add(db_resume)
+            session.commit()
+            return _model_to_dict(db_resume)
 
     async def create_resume_atomic_master(
         self,
@@ -108,17 +148,19 @@ class Database:
         processing_status: str = "pending",
         cover_letter: str | None = None,
         outreach_message: str | None = None,
+        username: str = "default",
     ) -> dict[str, Any]:
         async with self._master_resume_lock:
-            current_master = self.get_master_resume()
+            current_master = self.get_master_resume(username=username)
             is_master = current_master is None
 
             if current_master and current_master.get("processing_status") in ("failed", "processing"):
-                Resume = Query()
-                self.resumes.update(
-                    {"is_master": False},
-                    Resume.resume_id == current_master["resume_id"],
-                )
+                with SessionLocal() as session:
+                    session.query(ResumeModel).filter(
+                        ResumeModel.resume_id == current_master["resume_id"],
+                        ResumeModel.username == username
+                    ).update({"is_master": False})
+                    session.commit()
                 is_master = True
 
             return self.create_resume(
@@ -130,75 +172,117 @@ class Database:
                 processing_status=processing_status,
                 cover_letter=cover_letter,
                 outreach_message=outreach_message,
+                username=username,
             )
 
-    def get_resume(self, resume_id: str) -> dict[str, Any] | None:
-        Resume = Query()
-        result = self.resumes.search(Resume.resume_id == resume_id)
-        return result[0] if result else None
+    def get_resume(self, resume_id: str, username: str = "default") -> dict[str, Any] | None:
+        with SessionLocal() as session:
+            res = session.query(ResumeModel).filter(
+                ResumeModel.resume_id == resume_id,
+                ResumeModel.username == username
+            ).first()
+            return _model_to_dict(res)
 
-    def get_master_resume(self) -> dict[str, Any] | None:
-        Resume = Query()
-        result = self.resumes.search(Resume.is_master == True)
-        return result[0] if result else None
+    def get_master_resume(self, username: str = "default") -> dict[str, Any] | None:
+        with SessionLocal() as session:
+            res = session.query(ResumeModel).filter(
+                ResumeModel.is_master == True,
+                ResumeModel.username == username
+            ).first()
+            return _model_to_dict(res)
 
-    def update_resume(self, resume_id: str, updates: dict[str, Any]) -> dict[str, Any]:
-        Resume = Query()
-        updates["updated_at"] = datetime.now(timezone.utc).isoformat()
-        updated_count = self.resumes.update(updates, Resume.resume_id == resume_id)
+    def update_resume(self, resume_id: str, updates: dict[str, Any], username: str = "default") -> dict[str, Any]:
+        with SessionLocal() as session:
+            res = session.query(ResumeModel).filter(
+                ResumeModel.resume_id == resume_id,
+                ResumeModel.username == username
+            ).first()
+            if not res:
+                raise ValueError(f"Resume not found: {resume_id}")
+            
+            updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+            for k, v in updates.items():
+                if hasattr(res, k):
+                    setattr(res, k, v)
+            
+            session.commit()
+            return _model_to_dict(res)
 
-        if not updated_count:
-            raise ValueError(f"Resume not found: {resume_id}")
-
-        result = self.get_resume(resume_id)
-        if not result:
-            raise ValueError(f"Resume disappeared after update: {resume_id}")
-
-        return result
-
-    def delete_resume(self, resume_id: str) -> bool:
-        Resume = Query()
-        removed = self.resumes.remove(Resume.resume_id == resume_id)
-        return len(removed) > 0
-
-    def list_resumes(self) -> list[dict[str, Any]]:
-        return list(self.resumes.all())
-
-    def set_master_resume(self, resume_id: str) -> bool:
-        Resume = Query()
-        target = self.resumes.search(Resume.resume_id == resume_id)
-        if not target:
+    def delete_resume(self, resume_id: str, username: str = "default") -> bool:
+        with SessionLocal() as session:
+            res = session.query(ResumeModel).filter(
+                ResumeModel.resume_id == resume_id,
+                ResumeModel.username == username
+            ).first()
+            if res:
+                session.delete(res)
+                session.commit()
+                return True
             return False
-        self.resumes.update({"is_master": False}, Resume.is_master == True)
-        updated = self.resumes.update(
-            {"is_master": True}, Resume.resume_id == resume_id
-        )
-        return len(updated) > 0
 
-    def create_job(self, content: str, resume_id: str | None = None) -> dict[str, Any]:
+    def list_resumes(self, username: str = "default") -> list[dict[str, Any]]:
+        with SessionLocal() as session:
+            items = session.query(ResumeModel).filter(
+                ResumeModel.username == username
+            ).all()
+            return [_model_to_dict(item) for item in items]
+
+    def set_master_resume(self, resume_id: str, username: str = "default") -> bool:
+        with SessionLocal() as session:
+            target = session.query(ResumeModel).filter(
+                ResumeModel.resume_id == resume_id,
+                ResumeModel.username == username
+            ).first()
+            if not target:
+                return False
+            
+            # Unset other masters for this username
+            session.query(ResumeModel).filter(
+                ResumeModel.username == username,
+                ResumeModel.is_master == True
+            ).update({"is_master": False})
+            
+            target.is_master = True
+            session.commit()
+            return True
+
+    def create_job(self, content: str, resume_id: str | None = None, username: str = "default") -> dict[str, Any]:
         job_id = str(uuid4())
         now = datetime.now(timezone.utc).isoformat()
+        
+        db_job = JobModel(
+            job_id=job_id,
+            username=username,
+            content=content,
+            resume_id=resume_id,
+            created_at=now,
+        )
+        with SessionLocal() as session:
+            session.add(db_job)
+            session.commit()
+            return _model_to_dict(db_job)
 
-        doc = {
-            "job_id": job_id,
-            "content": content,
-            "resume_id": resume_id,
-            "created_at": now,
-        }
-        self.jobs.insert(doc)
-        return doc
+    def get_job(self, job_id: str, username: str = "default") -> dict[str, Any] | None:
+        with SessionLocal() as session:
+            res = session.query(JobModel).filter(
+                JobModel.job_id == job_id,
+                JobModel.username == username
+            ).first()
+            return _model_to_dict(res)
 
-    def get_job(self, job_id: str) -> dict[str, Any] | None:
-        Job = Query()
-        result = self.jobs.search(Job.job_id == job_id)
-        return result[0] if result else None
-
-    def update_job(self, job_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
-        Job = Query()
-        updated = self.jobs.update(updates, Job.job_id == job_id)
-        if not updated:
-            return None
-        return self.get_job(job_id)
+    def update_job(self, job_id: str, updates: dict[str, Any], username: str = "default") -> dict[str, Any] | None:
+        with SessionLocal() as session:
+            res = session.query(JobModel).filter(
+                JobModel.job_id == job_id,
+                JobModel.username == username
+            ).first()
+            if not res:
+                return None
+            for k, v in updates.items():
+                if hasattr(res, k):
+                    setattr(res, k, v)
+            session.commit()
+            return _model_to_dict(res)
 
     def create_improvement(
         self,
@@ -206,42 +290,58 @@ class Database:
         tailored_resume_id: str,
         job_id: str,
         improvements: list[dict[str, Any]],
+        username: str = "default",
     ) -> dict[str, Any]:
         request_id = str(uuid4())
         now = datetime.now(timezone.utc).isoformat()
-
-        doc = {
-            "request_id": request_id,
-            "original_resume_id": original_resume_id,
-            "tailored_resume_id": tailored_resume_id,
-            "job_id": job_id,
-            "improvements": improvements,
-            "created_at": now,
-        }
-        self.improvements.insert(doc)
-        return doc
+        
+        db_imp = ImprovementModel(
+            request_id=request_id,
+            username=username,
+            original_resume_id=original_resume_id,
+            tailored_resume_id=tailored_resume_id,
+            job_id=job_id,
+            improvements=improvements,
+            created_at=now,
+        )
+        with SessionLocal() as session:
+            session.add(db_imp)
+            session.commit()
+            return _model_to_dict(db_imp)
 
     def get_improvement_by_tailored_resume(
-        self, tailored_resume_id: str
+        self, tailored_resume_id: str, username: str = "default"
     ) -> dict[str, Any] | None:
-        Improvement = Query()
-        result = self.improvements.search(
-            Improvement.tailored_resume_id == tailored_resume_id
-        )
-        return result[0] if result else None
+        with SessionLocal() as session:
+            res = session.query(ImprovementModel).filter(
+                ImprovementModel.tailored_resume_id == tailored_resume_id,
+                ImprovementModel.username == username
+            ).first()
+            return _model_to_dict(res)
 
-    def get_stats(self) -> dict[str, Any]:
-        return {
-            "total_resumes": len(self.resumes),
-            "total_jobs": len(self.jobs),
-            "total_improvements": len(self.improvements),
-            "has_master_resume": self.get_master_resume() is not None,
-        }
+    def get_stats(self, username: str = "default") -> dict[str, Any]:
+        with SessionLocal() as session:
+            total_resumes = session.query(ResumeModel).filter(ResumeModel.username == username).count()
+            total_jobs = session.query(JobModel).filter(JobModel.username == username).count()
+            total_improvements = session.query(ImprovementModel).filter(ImprovementModel.username == username).count()
+            has_master = session.query(ResumeModel).filter(
+                ResumeModel.username == username,
+                ResumeModel.is_master == True
+            ).first() is not None
+            
+            return {
+                "total_resumes": total_resumes,
+                "total_jobs": total_jobs,
+                "total_improvements": total_improvements,
+                "has_master_resume": has_master,
+            }
 
-    def reset_database(self) -> None:
-        self.resumes.truncate()
-        self.jobs.truncate()
-        self.improvements.truncate()
+    def reset_database(self, username: str = "default") -> None:
+        with SessionLocal() as session:
+            session.query(ResumeModel).filter(ResumeModel.username == username).delete()
+            session.query(JobModel).filter(JobModel.username == username).delete()
+            session.query(ImprovementModel).filter(ImprovementModel.username == username).delete()
+            session.commit()
 
 
 db = Database()
@@ -716,6 +816,7 @@ Rules:
 - DO NOT invent new information
 - Preserve original date ranges exactly - do not modify years
 - Do NOT use em dash ("—") anywhere in the writing
+- Optimize for ATS parsing: Use standard section headings, weave job keywords naturally into the experience descriptions without keyword stuffing, and ensure the summary matches the core requirements of the job.
 
 Job Description:
 {job_description}
@@ -738,6 +839,101 @@ Output the title only, nothing else."""
 # ==========================================
 # 4. PARSING & IMPROVEMENT CORE LOGIC
 # ==========================================
+
+async def parse_document(content: bytes, filename: str) -> str:
+    """Convert PDF/DOCX to Markdown using markitdown."""
+    suffix = Path(filename).suffix.lower()
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+        tmp.write(content)
+        tmp_path = Path(tmp.name)
+    try:
+        md = MarkItDown()
+        result = md.convert(str(tmp_path))
+        return result.text_content
+    finally:
+        tmp_path.unlink(missing_ok=True)
+
+async def scrape_linkedin_job(url: str) -> str:
+    """Scrapes job description from a LinkedIn job URL using HTTP client with a Playwright fallback."""
+    import urllib.request
+    from bs4 import BeautifulSoup
+    
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    }
+    
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        loop = asyncio.get_running_loop()
+        def _fetch():
+            with urllib.request.urlopen(req, timeout=12) as response:
+                return response.read()
+        
+        html_bytes = await loop.run_in_executor(None, _fetch)
+        html = html_bytes.decode('utf-8', errors='ignore')
+        
+        soup = BeautifulSoup(html, 'html.parser')
+        desc_el = (
+            soup.find(class_='show-more-less-html__markup') or 
+            soup.find(class_='jobs-description__content') or 
+            soup.find(class_='jobs-description-content__text') or
+            soup.find(class_='description__text') or
+            soup.find('main')
+        )
+        
+        if desc_el:
+            text = desc_el.get_text('\n').strip()
+            if len(text) > 100:
+                clean_text = re.sub(r'\n{3,}', '\n\n', text)
+                return clean_text
+    except Exception as fetch_err:
+        logger.warning(f"Lightweight HTTP fetch failed: {fetch_err}. Falling back to Playwright...")
+
+    # Fallback to Playwright if guest fetch was blocked or failed
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        context = await browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            viewport={"width": 1280, "height": 800}
+        )
+        page = await context.new_page()
+        try:
+            await page.goto(url, timeout=20000, wait_until="domcontentloaded")
+            await page.wait_for_timeout(2000)
+            
+            selectors = [
+                ".show-more-less-html__markup",
+                ".jobs-description__content",
+                ".jobs-description-content__text",
+                ".core-section-container__content",
+                ".description__text",
+                "main"
+            ]
+            
+            text = ""
+            for sel in selectors:
+                locator = page.locator(sel)
+                if await locator.count() > 0:
+                    text = await locator.first.inner_text()
+                    if text.strip() and len(text.strip()) > 100:
+                        break
+            
+            if not text.strip():
+                text = await page.inner_text("body")
+                
+            clean_text = text.strip()
+            if not clean_text:
+                raise ValueError("Could not extract any text content from the URL")
+                
+            clean_text = re.sub(r'\n{3,}', '\n\n', clean_text)
+            return clean_text
+        except Exception as e:
+            logger.error(f"Playwright scraping failed: {e}")
+            raise ValueError(f"Failed to scrape LinkedIn job: {e}")
+        finally:
+            await browser.close()
 
 _INJECTION_PATTERNS = [
     r"ignore\s+(all\s+)?previous\s+instructions",

@@ -90,7 +90,7 @@ class Experience(BaseModel):
     title: str = ""
     company: str = ""
     location: str | None = None
-    years: str = ""
+    years: str | None = ""
     description: list[str] = Field(default_factory=list)
 
     @field_validator("description", mode="before")
@@ -102,7 +102,7 @@ class Education(BaseModel):
     id: int = 0
     institution: str = ""
     degree: str = ""
-    years: str = ""
+    years: str | None = ""
     description: str | None = None
 
     @field_validator("description", mode="before")
@@ -114,7 +114,7 @@ class Project(BaseModel):
     id: int = 0
     name: str = ""
     role: str = ""
-    years: str = ""
+    years: str | None = ""
     github: str | None = None
     website: str | None = None
     description: list[str] = Field(default_factory=list)
@@ -149,7 +149,7 @@ class CustomSectionItem(BaseModel):
     title: str = ""
     subtitle: str | None = None
     location: str | None = None
-    years: str = ""
+    years: str | None = ""
     description: list[str] = Field(default_factory=list)
 
     @field_validator("description", mode="before")
@@ -192,7 +192,7 @@ class ResumeData(BaseModel):
     personalProjects: list[Project] = Field(default_factory=list)
     additional: AdditionalInfo = Field(default_factory=AdditionalInfo)
     sectionMeta: list[SectionMeta] = Field(default_factory=list)
-    customSections: dict[str, CustomSection] = Field(default_factory=dict)
+    customSections: dict[str, Any] = Field(default_factory=dict)
 
     @field_validator("summary", mode="before")
     @classmethod
@@ -343,7 +343,7 @@ class LanguageConfigRequest(BaseModel):
 class LanguageConfigResponse(BaseModel):
     ui_language: str = "en"
     content_language: str = "en"
-    supported_languages: list[str] = ["en", "es", "zh", "ja"]
+    supported_languages: list[str] = ["en"]
 
 class PromptOption(BaseModel):
     id: str
@@ -402,3 +402,9 @@ class StatusResponse(BaseModel):
     llm_healthy: bool
     has_master_resume: bool
     database_stats: dict[str, Any]
+
+class ScrapeJobRequest(BaseModel):
+    url: str
+
+class ScrapeJobResponse(BaseModel):
+    description: str

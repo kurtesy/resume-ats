@@ -88,14 +88,28 @@ def _get_llm_api_key_with_fallback() -> str:
     """
     import os
 
-    # First check environment variable
+    # First check general environment variable
     env_key = os.environ.get("LLM_API_KEY", "")
     if env_key:
         return env_key
 
+    # Check provider-specific environment variables
+    provider = os.environ.get("LLM_PROVIDER", "openai").lower()
+    provider_env_keys = {
+        "gemini": ["GEMINI_API_KEY", "GOOGLE_API_KEY"],
+        "openai": ["OPENAI_API_KEY"],
+        "anthropic": ["ANTHROPIC_API_KEY"],
+        "deepseek": ["DEEPSEEK_API_KEY"],
+        "openrouter": ["OPENROUTER_API_KEY"],
+    }
+    
+    for env_name in provider_env_keys.get(provider, []):
+        val = os.environ.get(env_name, "")
+        if val:
+            return val
+
     # Fallback to config file based on provider
     config_keys = get_api_keys_from_config()
-    provider = os.environ.get("LLM_PROVIDER", "openai")
 
     # Map provider to config key
     provider_map = {

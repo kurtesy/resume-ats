@@ -27,6 +27,7 @@ export {
   updateResume,
   downloadResumePdf,
   deleteResume,
+  scrapeJobUrl,
   type ResumeListItem,
 } from './resume';
 

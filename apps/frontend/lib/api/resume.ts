@@ -134,6 +134,17 @@ async function postImprove(
   }
 }
 
+/** Scrapes job description from a LinkedIn URL */
+export async function scrapeJobUrl(url: string): Promise<string> {
+  const res = await apiPost('/jobs/scrape', { url });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to scrape URL (status ${res.status}): ${text}`);
+  }
+  const data = (await res.json()) as { description: string };
+  return data.description;
+}
+
 /** Uploads job descriptions and returns a job_id */
 export async function uploadJobDescriptions(
   descriptions: string[],
