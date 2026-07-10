@@ -98,7 +98,7 @@ export const RegenerateDialog: React.FC<RegenerateDialogProps> = ({
                 type="button"
                 onClick={() => toggleSection('experience')}
                 aria-expanded={expandedSections.has('experience')}
-                className="w-full p-4 flex items-center justify-between bg-[#F0F0E8] hover:bg-[#E5E5E0] transition-colors"
+                className="w-full p-4 flex items-center justify-between bg-zinc-50 hover:bg-zinc-100 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <Briefcase className="w-5 h-5" />
@@ -137,7 +137,7 @@ export const RegenerateDialog: React.FC<RegenerateDialogProps> = ({
                 type="button"
                 onClick={() => toggleSection('projects')}
                 aria-expanded={expandedSections.has('projects')}
-                className="w-full p-4 flex items-center justify-between bg-[#F0F0E8] hover:bg-[#E5E5E0] transition-colors"
+                className="w-full p-4 flex items-center justify-between bg-zinc-50 hover:bg-zinc-100 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <FolderKanban className="w-5 h-5" />
@@ -174,7 +174,7 @@ export const RegenerateDialog: React.FC<RegenerateDialogProps> = ({
                 type="button"
                 onClick={() => toggleSection('skills')}
                 aria-expanded={expandedSections.has('skills')}
-                className="w-full p-4 flex items-center justify-between bg-[#F0F0E8] hover:bg-[#E5E5E0] transition-colors"
+                className="w-full p-4 flex items-center justify-between bg-zinc-50 hover:bg-zinc-100 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <Lightbulb className="w-5 h-5" />

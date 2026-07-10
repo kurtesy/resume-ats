@@ -317,15 +317,8 @@ export default function TailorPage() {
   };
 
   return (
-    <div
-      className="min-h-screen w-full bg-[#F6F5EE] flex flex-col items-center justify-center p-4 md:p-8 font-sans"
-      style={{
-        backgroundImage:
-          'linear-gradient(rgba(29, 78, 216, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(29, 78, 216, 0.1) 1px, transparent 1px)',
-        backgroundSize: '40px 40px',
-      }}
-    >
-      <div className="w-full max-w-4xl bg-white border border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-8 md:p-12 lg:p-14 relative">
+    <div className="min-h-screen w-full bg-white bg-grid-lines flex flex-col items-center justify-center p-4 md:p-8 font-sans">
+      <div className="w-full max-w-4xl bg-white border border-black shadow-none p-8 md:p-12 lg:p-14 relative">
         {/* Back Button */}
         <Button variant="link" className="absolute top-4 left-4" onClick={() => router.back()}>
           <ArrowLeft className="w-4 h-4" />
@@ -336,7 +329,7 @@ export default function TailorPage() {
           <h1 className="font-serif text-4xl font-bold uppercase tracking-tight mb-2">
             {t('tailor.heroTitle')}
           </h1>
-          <p className="font-mono text-sm text-blue-700 font-bold uppercase">
+          <p className="font-mono text-sm text-zinc-500 font-bold uppercase">
             {'// '}
             {t('tailor.pasteJobDescriptionBelow')}
           </p>
@@ -344,7 +337,7 @@ export default function TailorPage() {
 
         {/* LLM Not Configured Warning */}
         {!statusLoading && !isLlmConfigured && (
-          <div className="mb-6 border-2 border-amber-500 bg-amber-50 p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
+          <div className="mb-6 border-2 border-amber-500 bg-amber-50 p-4">
             <div className="flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
               <div className="flex-1">
@@ -406,8 +399,8 @@ export default function TailorPage() {
           />
 
           {/* LinkedIn URL Scraper Input */}
-          <div className="border-2 border-black p-4 bg-[#F0F0E8] space-y-3">
-            <label className="block text-xs font-mono font-bold uppercase tracking-wider text-blue-700">
+          <div className="border border-black p-4 bg-zinc-50 space-y-3">
+            <label className="block text-xs font-mono font-bold uppercase tracking-wider text-black">
               ⚡ LinkedIn Job URL Parser (ATS Booster)
             </label>
             <div className="flex flex-col sm:flex-row gap-2">
@@ -417,12 +410,12 @@ export default function TailorPage() {
                 value={jobUrl}
                 onChange={(e) => setJobUrl(e.target.value)}
                 disabled={isLoading || isScraping}
-                className="flex-grow font-mono text-xs bg-white border-2 border-black focus:outline-none focus:border-blue-700 px-3 py-2 rounded-none"
+                className="flex-grow font-mono text-xs bg-white border border-black focus:outline-none focus:border-black px-3 py-2 rounded-none"
               />
               <Button
                 onClick={handleScrapeJobUrl}
                 disabled={isLoading || isScraping || !jobUrl.trim()}
-                className="rounded-none bg-blue-700 text-white font-mono text-xs uppercase font-bold hover:bg-blue-800 shrink-0"
+                className="rounded-none bg-black text-white font-mono text-xs uppercase font-bold hover:bg-white hover:text-black border border-black shrink-0"
               >
                 {isScraping ? (
                   <>
@@ -443,7 +436,7 @@ export default function TailorPage() {
           <div className="relative">
             <Textarea
               placeholder={t('tailor.jobDescriptionPlaceholder')}
-              className="min-h-[300px] font-mono text-sm bg-[#F0F0E8] border-2 border-black focus:ring-0 focus:border-blue-700 resize-none p-4 rounded-none"
+              className="min-h-[300px] font-mono text-sm bg-white border border-black focus:ring-0 focus:border-black resize-none p-4 rounded-none"
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
               onKeyDown={handleTextareaKeyDown}

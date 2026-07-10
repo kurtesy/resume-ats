@@ -1,89 +1,104 @@
-# Swiss International Style Guide
+# Editorial Style Guide
 
 > **REQUIRED** for all frontend changes in Resume Matcher.
 
 ## Design Principles
 
-1. **Grid-based layouts** - Mathematical precision
-2. **Asymmetric balance** - Strategic spacing
-3. **Objective typography** - Serif headers, mono metadata, sans body
-4. **Minimal ornamentation** - Hard edges, no gradients, no rounded corners
+1. **Pure white canvas** — Clean, minimal background
+2. **Monochromatic palette** — Black text, white backgrounds, zinc-gray containers
+3. **Flat, no-shadow aesthetic** — Clean lines, no depth effects
+4. **High-end typography** — Playfair Display serif for headings, legible sans for body
+5. **Color inversion interactions** — Buttons and controls invert colors on hover/select
 
 ## Color Palette
 
 | Name | Hex | Usage |
 |------|-----|-------|
-| Canvas | `#F0F0E8` | Background |
-| Ink | `#000000` | Text, borders |
-| Hyper Blue | `#1D4ED8` | Links, primary actions |
-| Signal Green | `#15803D` | Success, downloads |
-| Alert Orange | `#F97316` | Warnings |
-| Alert Red | `#DC2626` | Errors, delete |
-| Steel Grey | `#4B5563` | Secondary text |
+| Canvas | `#FFFFFF` | Background, cards |
+| Ink | `#000000` | Text, borders, primary buttons |
+| Panel | `#F4F4F5` | Secondary fills, muted containers |
+| Destructive | `#DC2626` | Delete, remove, error states (only semantic color) |
+| Gray | `#71717A` | Secondary text, disabled states |
 
 ## Typography
 
 ```css
-font-serif   /* Headers: Georgia, Times */
-font-mono    /* Metadata, labels: SF Mono, Consolas */
-font-sans    /* Body text: Inter, Helvetica */
+font-serif     /* Headings: Playfair Display */
+font-sans      /* Body text: Geist */
+font-mono      /* Labels, metadata: Space Grotesk */
 ```
 
 | Use | Font | Size | Weight |
 |-----|------|------|--------|
-| Headers | serif | 3xl+ | bold |
-| Body | sans | base | normal |
-| Labels | mono | sm | medium, uppercase |
-| Metadata | mono | xs | light |
+| Headers | serif | 2xl+ | 500–700 |
+| Body | sans | base | 400 |
+| Labels | mono | sm | bold, uppercase |
+| Metadata | mono | xs | 400 |
 
 ## Components
 
 ### Buttons
-- `rounded-none` (no rounded corners)
-- Hard shadows: `shadow-[2px_2px_0px_0px_#000000]`
-- Hover: `translate-y-[1px] translate-x-[1px] shadow-none`
+- **Base**: `rounded-none` (square corners), `border border-black`, no shadow
+- **Primary** (`bg-black text-white`): hover to `bg-white text-black`
+- **Outline** (`bg-white text-black`): hover to `bg-black text-white`
+- **Destructive** (`bg-red-600 text-white`): hover to `bg-white text-red-600`
+- **Secondary** (`bg-zinc-100`): hover to `bg-zinc-200`
+- **Ghost**: transparent, no border, hover to `bg-gray-100`
+- **Link**: text only, underline on hover
 
 ### Inputs
 - `border border-black rounded-none`
-- Focus: `ring-1 ring-blue-700`
+- Focus: `ring-2 ring-black`
 
 ### Cards
-- `border-2 border-black`
-- Shadow: `shadow-[4px_4px_0px_0px_#000000]`
+- `border border-black bg-white`
+- Hover: `bg-zinc-50` (subtle fill, no shadow)
+- No rounded corners
 
 ### Dialogs
-- Centered, `max-w-md`
-- Hard black border
+- White background, black border
+- Centered, `max-w-lg`
+- No shadows, clean overlay
+
+### Grid Background
+- Subtle 40px × 40px grid: `rgba(0, 0, 0, 0.05)` lines on white
+- Use `.bg-grid-lines` utility class
+- Decorative only, does not distract from content
 
 ## Status Indicators
 
 ```jsx
-// Ready
-<div className="w-3 h-3 bg-green-700" />
-<span className="text-green-700 font-bold">STATUS: READY</span>
+// Active/Selected state
+<div className="w-3 h-3 bg-black" />
+<span className="text-black font-bold">ACTIVE</span>
 
-// Setup Required
-<div className="w-3 h-3 bg-amber-500" />
-<span className="text-amber-500 font-bold">STATUS: SETUP REQUIRED</span>
+// Destructive/Error state
+<div className="w-3 h-3 bg-red-600" />
+<span className="text-red-600 font-bold">ERROR</span>
 ```
 
 ## Quick Reference
 
 ```jsx
-// Swiss button
-<button className="rounded-none border-2 border-black shadow-[2px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none">
+// Editorial button
+<button className="rounded-none border border-black bg-black text-white hover:bg-white hover:text-black">
 
-// Swiss card
-<div className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000000]">
+// Editorial card
+<div className="bg-white border border-black hover:bg-zinc-50">
 
-// Swiss label
-<label className="font-mono text-sm uppercase tracking-wider">
+// Editorial label
+<label className="font-mono text-sm uppercase tracking-wider font-bold">
+
+// Grid background
+<div className="bg-white bg-grid-lines">
 ```
 
 ## Anti-Patterns
 
-❌ No rounded corners (`rounded-*`)
-❌ No gradients
-❌ No blur shadows
-❌ No decorative icons
-❌ No pastel colors
+❌ Hard shadows (offset drop-shadows, blur)
+❌ Rounded corners (`rounded-*` except `rounded-none`)
+❌ Gradients
+❌ Decorative icons or ornaments
+❌ Pastel or muted colors (use pure black, white, gray, or signal red only)
+❌ Colored text for semantic meaning (use icons/labels instead)
+❌ Translate/press effects on hover (use color inversion only)

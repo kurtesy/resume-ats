@@ -122,7 +122,7 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
                   onClick={() => setSectionType(item.type)}
                   className={`w-full p-4 border text-left transition-colors ${
                     sectionType === item.type
-                      ? 'border-black bg-gray-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                      ? 'border-black bg-gray-50'
                       : 'border-gray-300 hover:border-gray-400'
                   }`}
                 >
@@ -152,7 +152,7 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
           </div>
         </div>
 
-        <DialogFooter className="p-4 bg-[#F0F0E8] border-t border-black flex-row justify-end gap-3">
+        <DialogFooter className="p-4 bg-zinc-50 border-t border-black flex-row justify-end gap-3">
           <DialogClose asChild>
             <Button variant="outline" className="rounded-none border-black">
               {t('common.cancel')}

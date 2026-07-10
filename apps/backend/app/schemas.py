@@ -408,3 +408,73 @@ class ScrapeJobRequest(BaseModel):
 
 class ScrapeJobResponse(BaseModel):
     description: str
+
+class EnrichmentItem(BaseModel):
+    item_id: str
+    item_type: str
+    title: str
+    subtitle: str | None = None
+    current_description: list[str] = Field(default_factory=list)
+    weakness_reason: str
+
+class EnrichmentQuestion(BaseModel):
+    question_id: str
+    item_id: str
+    question: str
+    placeholder: str = ""
+
+class AnalysisResponse(BaseModel):
+    items_to_enrich: list[EnrichmentItem] = Field(default_factory=list)
+    questions: list[EnrichmentQuestion] = Field(default_factory=list)
+    analysis_summary: str | None = None
+
+class AnswerInput(BaseModel):
+    question_id: str
+    answer: str
+
+class EnhanceRequest(BaseModel):
+    resume_id: str
+    answers: list[AnswerInput]
+
+class EnhancedDescription(BaseModel):
+    item_id: str
+    item_type: str
+    title: str
+    original_description: list[str] = Field(default_factory=list)
+    enhanced_description: list[str] = Field(default_factory=list)
+
+class EnhancementPreview(BaseModel):
+    enhancements: list[EnhancedDescription] = Field(default_factory=list)
+
+class RegenerateItemInput(BaseModel):
+    item_id: str
+    item_type: str
+    title: str
+    subtitle: str | None = None
+    current_content: list[str] = Field(default_factory=list)
+
+class RegenerateRequest(BaseModel):
+    resume_id: str
+    items: list[RegenerateItemInput]
+    instruction: str
+    output_language: str = "en"
+
+class RegeneratedItem(BaseModel):
+    item_id: str
+    item_type: str
+    title: str
+    subtitle: str | None = None
+    original_content: list[str] = Field(default_factory=list)
+    new_content: list[str] = Field(default_factory=list)
+    diff_summary: str = ""
+
+class RegenerateItemError(BaseModel):
+    item_id: str
+    item_type: str
+    title: str
+    subtitle: str | None = None
+    message: str
+
+class RegenerateResponse(BaseModel):
+    regenerated_items: list[RegeneratedItem] = Field(default_factory=list)
+    errors: list[RegenerateItemError] = Field(default_factory=list)

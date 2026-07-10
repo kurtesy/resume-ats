@@ -87,7 +87,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
 
   return (
     <div
-      className={`space-y-0 border p-6 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] ${
+      className={`space-y-0 border p-6 bg-white ${
         isHidden ? 'border-dashed border-gray-400 opacity-60' : 'border-black'
       }`}
     >

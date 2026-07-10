@@ -11,21 +11,16 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     const baseStyles = 'rounded-none flex flex-col relative overflow-hidden';
 
     const variants = {
-      default: 'bg-canvas',
+      default: 'bg-canvas border border-ink',
       interactive: cn(
-        'bg-canvas border-2 border-transparent', // Initial state
-        'transition-all duration-200 ease-in-out',
+        'bg-canvas border border-ink',
+        'transition-all duration-150 ease-in-out',
         'cursor-pointer group',
-        'hover:z-20 hover:border-ink hover:shadow-sw-default hover:-translate-y-[2px] hover:-translate-x-[2px]'
+        'hover:bg-zinc-50'
       ),
-      outline: 'bg-canvas border-2 border-ink',
+      outline: 'bg-canvas border border-ink',
       ghost: 'bg-transparent border-none shadow-none',
     };
-
-    // Dashboard specific style that was common:
-    // border-2 border-dashed border-amber-500 bg-amber-50
-    // We can handle specific overrides via className, but the base interactive card
-    // in dashboard had: bg-[#F0F0E8] (canvas)
 
     return (
       <div

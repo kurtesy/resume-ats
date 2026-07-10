@@ -40,20 +40,6 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Swiss Style Tokens */
-  --color-canvas: #f0f0e8;
-  --color-ink: #000000;
-  --color-success: #15803d;
-  --color-warning: #f97316;
-
-  --shadow-sw-sm: 2px 2px 0px 0px #000000;
-  --shadow-sw-default: 4px 4px 0px 0px #000000;
-  --shadow-sw-card: 6px 6px 0px 0px #000000;
-
-  /* Fonts */
-  --font-sans: 'Geist Sans', sans-serif;
-  --font-mono: 'Space Grotesk', monospace;
-
   /* Animations */
   --animate-gradient: gradient 8s linear infinite;
 
@@ -65,81 +51,77 @@
 }
 
 :root {
-  --font-mono: 'Geist Mono', monospace;
-  --font-sans: 'Geist', sans-serif;
-  --radius: 0.625rem;
+  /* Fonts */
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-serif: var(--font-playfair-display), serif;
+  --radius: 0px;
 
-  /* Swiss International Style Palette */
-  --background: #f0f0e8;
-  /* Canvas */
+  /* Editorial White/Black Palette */
+  --background: #ffffff;
   --foreground: #000000;
-  /* Ink */
 
-  --card: #f0f0e8;
+  --card: #ffffff;
   --card-foreground: #000000;
 
-  --popover: #f0f0e8;
+  --popover: #ffffff;
   --popover-foreground: #000000;
 
-  --primary: #1d4ed8;
-  /* Hyper Blue */
+  --primary: #000000;
   --primary-foreground: #ffffff;
 
-  --secondary: #e5e5e0;
-  /* Panel Grey */
+  --secondary: #f4f4f5;
   --secondary-foreground: #000000;
 
-  --muted: #e5e5e0;
-  --muted-foreground: #6b7280;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
 
-  --accent: #e5e5e0;
+  --accent: #f4f4f5;
   --accent-foreground: #000000;
 
   --destructive: #dc2626;
-  /* Alert Red */
   --destructive-foreground: #ffffff;
 
   --border: #000000;
-  --input: #f0f0e8;
-  --ring: #1d4ed8;
+  --input: #ffffff;
+  --ring: #000000;
 
-  --chart-1: #1d4ed8;
+  --chart-1: #000000;
   --chart-2: #15803d;
   --chart-3: #f97316;
   --chart-4: #dc2626;
   --chart-5: #000000;
 
-  --sidebar: #e5e5e0;
+  --sidebar: #f4f4f5;
   --sidebar-foreground: #000000;
-  --sidebar-primary: #1d4ed8;
+  --sidebar-primary: #000000;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #d8d8d2;
+  --sidebar-accent: #f4f4f5;
   --sidebar-accent-foreground: #000000;
   --sidebar-border: #000000;
-  --sidebar-ring: #1d4ed8;
 }
 
 .dark {
-  /* Minimal Dark Mode mapping for now - Swiss Style is predominantly light/brutalist */
+  /* Dark Mode - Monochrome Editorial Style */
   --background: #1a1a1a;
   --foreground: #ffffff;
   --card: #2a2a2a;
   --card-foreground: #ffffff;
   --popover: #2a2a2a;
   --popover-foreground: #ffffff;
-  --primary: #3b82f6;
-  --primary-foreground: #ffffff;
-  --secondary: #2a2a2a;
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --secondary: #404040;
   --secondary-foreground: #ffffff;
-  --muted: #2a2a2a;
+  --muted: #404040;
   --muted-foreground: #a3a3a3;
-  --accent: #2a2a2a;
+  --accent: #404040;
   --accent-foreground: #ffffff;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
   --border: #404040;
   --input: #2a2a2a;
-  --ring: #3b82f6;
+  --ring: #ffffff;
 }
 
 @layer base {
@@ -156,8 +138,14 @@
   }
 }
 
-@media print {
+.bg-grid-lines {
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
 
+@media print {
   html,
   body {
     background: #ffffff !important;
@@ -238,14 +226,14 @@
 }
 
 /* Ensure the header + first content element stay together */
-.resume-body .resume-section-title+.resume-items>*:first-child,
-.resume-body .resume-section-title-sm+.resume-items>*:first-child,
-.resume-body .resume-section-title+p,
-.resume-body .resume-section-title-sm+p,
-.resume-body .resume-section-title+ul,
-.resume-body .resume-section-title-sm+ul,
-.resume-body .resume-section-title+.resume-item,
-.resume-body .resume-section-title-sm+.resume-item {
+.resume-body .resume-section-title + .resume-items > *:first-child,
+.resume-body .resume-section-title-sm + .resume-items > *:first-child,
+.resume-body .resume-section-title + p,
+.resume-body .resume-section-title-sm + p,
+.resume-body .resume-section-title + ul,
+.resume-body .resume-section-title-sm + ul,
+.resume-body .resume-section-title + .resume-item,
+.resume-body .resume-section-title-sm + .resume-item {
   break-before: avoid;
   page-break-before: avoid;
 }
@@ -276,14 +264,14 @@
   }
 
   /* Keep section header with first content in print */
-  .resume-body .resume-section-title+.resume-items>*:first-child,
-  .resume-body .resume-section-title-sm+.resume-items>*:first-child,
-  .resume-body .resume-section-title+p,
-  .resume-body .resume-section-title-sm+p,
-  .resume-body .resume-section-title+ul,
-  .resume-body .resume-section-title-sm+ul,
-  .resume-body .resume-section-title+.resume-item,
-  .resume-body .resume-section-title-sm+.resume-item {
+  .resume-body .resume-section-title + .resume-items > *:first-child,
+  .resume-body .resume-section-title-sm + .resume-items > *:first-child,
+  .resume-body .resume-section-title + p,
+  .resume-body .resume-section-title-sm + p,
+  .resume-body .resume-section-title + ul,
+  .resume-body .resume-section-title-sm + ul,
+  .resume-body .resume-section-title + .resume-item,
+  .resume-body .resume-section-title-sm + .resume-item {
     break-before: avoid !important;
     page-break-before: avoid !important;
   }

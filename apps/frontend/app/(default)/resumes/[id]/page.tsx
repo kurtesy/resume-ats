@@ -211,9 +211,9 @@ export default function ResumeViewerPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F0F0E8]">
-        <Loader2 className="w-10 h-10 animate-spin text-blue-700 mb-4" />
-        <p className="font-mono text-sm font-bold uppercase text-blue-700">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+        <Loader2 className="w-10 h-10 animate-spin text-black mb-4" />
+        <p className="font-mono text-sm font-bold uppercase text-black">
           {t('resumeViewer.loading')}
         </p>
       </div>
@@ -225,14 +225,10 @@ export default function ResumeViewerPage() {
     const isFailed = processingStatus === 'failed';
 
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F0F0E8] p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
         <div
-          className={`border p-6 text-center max-w-md shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] ${
-            isProcessing
-              ? 'bg-blue-50 border-blue-200'
-              : isFailed
-                ? 'bg-orange-50 border-orange-200'
-                : 'bg-red-50 border-red-200'
+          className={`border border-black p-6 text-center max-w-md shadow-none ${
+            isProcessing ? 'bg-zinc-50' : isFailed ? 'bg-zinc-50' : 'bg-zinc-50'
           }`}
         >
           <div className="flex justify-center mb-4">
@@ -279,7 +275,7 @@ export default function ResumeViewerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F0F0E8] py-12 px-4 md:px-8 overflow-y-auto">
+    <div className="min-h-screen bg-white py-12 px-4 md:px-8 overflow-y-auto">
       <div className="max-w-7xl mx-auto">
         {/* Header Actions */}
         <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 no-print">
@@ -344,7 +340,7 @@ export default function ResumeViewerPage() {
 
         {/* Resume Viewer */}
         <div className="flex justify-center pb-4">
-          <div className="resume-print w-full max-w-[250mm] shadow-[8px_8px_0px_0px_#000000] border-2 border-black bg-white">
+          <div className="resume-print w-full max-w-[250mm] border-2 border-black bg-white">
             <Resume
               resumeData={localizedResumeData || resumeData}
               additionalSectionLabels={{

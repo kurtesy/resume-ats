@@ -190,24 +190,24 @@ export function ResumeUploadDialog({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button className="rounded-none border border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all">
+          <Button className="rounded-none border border-black bg-black text-white hover:bg-white hover:text-black transition-all">
             <UploadIcon className="w-4 h-4 mr-2" />
             {t('dashboard.uploadResume')}
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md bg-[#F0F0E8] border border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,0.2)] p-0 gap-0 rounded-none">
+      <DialogContent className="sm:max-w-md bg-white border border-black shadow-none p-0 gap-0 rounded-none">
         <DialogHeader className="p-6 border-b border-black bg-white">
           <DialogTitle className="font-serif text-2xl font-bold uppercase tracking-tight">
             {t('dashboard.uploadResume')}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="p-6 bg-[#F0F0E8]">
+        <div className="p-6 bg-white">
           <div
             className={`
-                            relative border-2 border-dashed p-8 text-center transition-all duration-200
-                            ${isDragging ? 'border-blue-700 bg-blue-50' : 'border-gray-400 hover:border-black hover:bg-white'}
+                            relative border border-dashed p-8 text-center transition-all duration-200
+                            ${isDragging ? 'border-black bg-zinc-50' : 'border-zinc-300 hover:border-black hover:bg-zinc-50'}
                             ${currentFile ? 'bg-white border-solid border-black' : ''}
                             ${!currentFile && !isRetryingProcessing ? 'cursor-pointer' : 'cursor-default'}
                             ${isRetryingProcessing ? 'opacity-70' : ''}
@@ -257,7 +257,7 @@ export function ResumeUploadDialog({
               </div>
             ) : (
               <div className="flex flex-col items-center py-4">
-                <div className="w-12 h-12 border border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] flex items-center justify-center mb-4">
+                <div className="w-12 h-12 border border-black bg-white flex items-center justify-center mb-4">
                   <UploadIcon className="w-6 h-6 text-black" />
                 </div>
                 <p className="font-bold text-lg mb-1">

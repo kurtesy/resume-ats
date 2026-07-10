@@ -72,7 +72,7 @@ export function Dropdown({
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           disabled={disabled}
-          className="w-full flex items-center justify-between border border-black bg-white px-4 py-3 font-mono text-sm transition-all duration-150 ease-out shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-none hover:translate-y-[2px] hover:translate-x-[2px] disabled:opacity-50 disabled:cursor-not-allowed rounded-none"
+          className="w-full flex items-center justify-between border border-black bg-white px-4 py-3 font-mono text-sm transition-all duration-150 ease-out hover:shadow-none disabled:opacity-50 disabled:cursor-not-allowed rounded-none"
         >
           <div className="flex-1 text-left min-w-0">
             {selectedOption ? (
@@ -97,7 +97,7 @@ export function Dropdown({
 
         {/* Dropdown Menu */}
         {isOpen && (
-          <div className="absolute top-full left-0 right-0 mt-1 z-50 border border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] rounded-none">
+          <div className="absolute top-full left-0 right-0 mt-1 z-50 border border-black bg-white rounded-none">
             <div className="max-h-64 overflow-y-auto">
               {options.map((option, index) => (
                 <React.Fragment key={option.id}>

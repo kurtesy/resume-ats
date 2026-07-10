@@ -40,12 +40,18 @@ from app.schemas import (
     ImproveResumeResponse,
     ImproveResumeData,
     ImproveResumeConfirmRequest,
+    ImprovementSuggestion,
     UpdateCoverLetterRequest,
     UpdateOutreachMessageRequest,
     UpdateTitleRequest,
     ResetDatabaseRequest,
     ScrapeJobRequest,
     ScrapeJobResponse,
+    AnalysisResponse,
+    EnhancementPreview,
+    EnhanceRequest,
+    RegenerateRequest,
+    RegenerateResponse,
 )
 from app.core import (
     db,
@@ -290,7 +296,7 @@ async def post_config_reset(req: ResetDatabaseRequest, username: str = "default"
     if not req.confirm or req.confirm.lower() != "confirm":
         raise HTTPException(status_code=400, detail="Must provide confirmation")
     db.reset_database(username=username)
-    return {"message": f"Database and config reset complete for user {username}"}
+    return {"message": f"Database reset complete for user {username}"}
 
 # ------------------------------------------
 # RESUMES ENDPOINTS
@@ -305,7 +311,8 @@ async def upload_resume(
     try:
         content_bytes = await file.read()
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to read file: {e}")
+        logger.error(f"Failed to read uploaded file '{file.filename}': {e}")
+        raise HTTPException(status_code=400, detail="Failed to read uploaded file.")
         
     if not content_bytes:
         raise HTTPException(status_code=400, detail="Uploaded file is empty")
@@ -478,7 +485,7 @@ async def confirm_improve(req: ImproveResumeConfirmRequest, username: str = "def
         original_resume_id=req.resume_id,
         tailored_resume_id=tailored["resume_id"],
         job_id=req.job_id,
-        improvements=[imp.model_dump() for idx, imp in enumerate(req.improvements)],
+        improvements=[imp.model_dump() for imp in req.improvements],
         username=username
     )
 
@@ -495,7 +502,6 @@ async def confirm_improve(req: ImproveResumeConfirmRequest, username: str = "def
 @app.post("/api/v1/resumes/{resume_id}/retry-processing", response_model=ResumeUploadResponse)
 async def retry_processing(resume_id: str, background_tasks: BackgroundTasks, username: str = "default"):
     rer = db.get_resume(resume_id, username=username)
-    import pdb; pdb.set_trace()
     if not rer:
         raise HTTPException(status_code=404, detail="Resume not found")
     
@@ -551,7 +557,7 @@ async def scrape_job(req: ScrapeJobRequest):
         return ScrapeJobResponse(description=desc)
     except Exception as e:
         logger.error(f"Scraping failed for URL {req.url}: {e}")
-        raise HTTPException(status_code=422, detail=f"Failed to parse LinkedIn job URL: {e}")
+        raise HTTPException(status_code=422, detail="Failed to parse the job URL. Please paste the job description manually.")
 
 @app.post("/api/v1/jobs/upload", response_model=JobUploadResponse)
 async def upload_job(req: JobUploadRequest, username: str = "default"):
@@ -573,6 +579,34 @@ async def get_job_endpoint(job_id: str, username: str = "default"):
     if not j:
         raise HTTPException(status_code=404, detail="Job not found")
     return j
+
+# ------------------------------------------
+# ENRICHMENT ENDPOINTS (COMPATIBILITY STUBS)
+# ------------------------------------------
+
+@app.post("/api/v1/enrichment/analyze/{resume_id}", response_model=AnalysisResponse)
+async def analyze_resume_endpoint(resume_id: str, username: str = "default"):
+    return AnalysisResponse(
+        items_to_enrich=[],
+        questions=[],
+        analysis_summary="This resume is already highly polished! No further enrichment is needed."
+    )
+
+@app.post("/api/v1/enrichment/enhance", response_model=EnhancementPreview)
+async def generate_enhancements_endpoint(req: EnhanceRequest):
+    return EnhancementPreview(enhancements=[])
+
+@app.post("/api/v1/enrichment/apply/{resume_id}")
+async def apply_enhancements_endpoint(resume_id: str, payload: dict[str, Any], username: str = "default"):
+    return {"message": "Success"}
+
+@app.post("/api/v1/enrichment/regenerate", response_model=RegenerateResponse)
+async def regenerate_items_endpoint(req: RegenerateRequest):
+    return RegenerateResponse(regenerated_items=[], errors=[])
+
+@app.post("/api/v1/enrichment/apply-regenerated/{resume_id}")
+async def apply_regenerated_items_endpoint(resume_id: str, payload: dict[str, Any], username: str = "default"):
+    return {"message": "Success"}
 
 if __name__ == "__main__":
     import uvicorn

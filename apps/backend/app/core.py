@@ -15,17 +15,13 @@ from dataclasses import dataclass
 from markitdown import MarkItDown
 from playwright.async_api import async_playwright
 
-from tinydb import Query, TinyDB
-from tinydb.table import Table
 import litellm
 
 from app.config import settings
 from app.schemas import (
     ResumeData,
     ResumeFieldDiff,
-    ResumeDiffSummary,
-    ImprovementSuggestion,
-    RefinementStats,
+    ResumeDiffSummary
 )
 
 logger = logging.getLogger(__name__)
@@ -779,62 +775,111 @@ RESUME_SCHEMA = """{
   "customSections": {} 
 }"""
 
-PARSE_RESUME_PROMPT = """Parse this resume into JSON. Output ONLY the JSON object, no other text.
-Example format:
+PARSE_RESUME_PROMPT = """You are parsing a resume into structured JSON. Output ONLY the JSON object, no other text, no markdown fences.
+
+Extraction rules:
+- Transcribe the candidate's real content faithfully. Copy names, titles, companies, dates, locations, and numbers EXACTLY as written. Do not paraphrase, summarize, correct, translate, or embellish.
+- Never copy values from the format example below. It only shows the shape of the JSON; "John Doe", "Tech Corp", etc. are placeholders, not data.
+- If a field is not present in the resume, use an empty string "" (or an empty array [] for list fields). Never invent, guess, or infer missing values.
+- Split every experience/project bullet into a separate array item. Strip leading bullet characters ("-", "*", "•") and numbering.
+- Preserve the original ordering of experiences, education, projects, and bullets.
+- Map skills, languages, certifications, and awards into the correct `additional` sub-arrays. If a skill list is comma- or pipe-separated, split it into individual items.
+- Keep the summary/objective text as written; do not rewrite it.
+
+The JSON must match this exact structure (shape only, ignore the sample values):
 {schema}
+
 Resume to parse:
 {resume_text}"""
 
-EXTRACT_KEYWORDS_PROMPT = """Extract job requirements as JSON. Output ONLY the JSON object, no other text.
-Example format:
+EXTRACT_KEYWORDS_PROMPT = """You are an ATS (Applicant Tracking System) and technical recruiting analyst. Extract the job's requirements and its ATS-critical keywords as JSON. Output ONLY the JSON object, no other text, no markdown fences.
+
+Extraction rules:
+- Capture keywords using the EXACT surface form used in the job description (an ATS matches literal strings). If the JD writes "CI/CD", "K8s", or "React.js", keep it verbatim.
+- When the JD gives both an acronym and its expansion (e.g. "Kubernetes (K8s)"), include BOTH forms as separate keywords so either can be matched.
+- required_skills: hard skills, tools, languages, frameworks, and platforms the JD marks as required/must-have.
+- preferred_skills: skills described as nice-to-have, preferred, bonus, or "a plus".
+- keywords: additional ATS-relevant terms and phrases (methodologies, domains, certifications by name, notable soft skills). No duplicates of items already listed above.
+- key_responsibilities: the core duties, phrased as short action statements.
+- experience_years: the minimum total years of experience as an integer. Use 0 if unspecified.
+- seniority_level: one of "intern", "junior", "mid", "senior", "lead", "principal", "manager", or "unspecified".
+- Do not invent requirements that are not in the text. Deduplicate case-insensitively. Preserve the JD's original casing for each retained term.
+
+Output in EXACTLY this JSON format:
 {{
   "required_skills": ["Python", "AWS"],
   "preferred_skills": ["Kubernetes"],
-  "experience_requirements": ["5+ years"],
-  "education_requirements": ["Bachelor's in CS"],
-  "key_responsibilities": ["Lead team"],
-  "keywords": ["microservices"],
+  "experience_requirements": ["5+ years building distributed systems"],
+  "education_requirements": ["Bachelor's in CS or equivalent"],
+  "key_responsibilities": ["Lead a team of engineers"],
+  "keywords": ["microservices", "CI/CD", "Agile"],
   "experience_years": 5,
   "seniority_level": "senior"
 }}
+
 Job description:
 {job_description}"""
 
-CRITICAL_TRUTHFULNESS_RULES = """CRITICAL TRUTHFULNESS RULES - NEVER VIOLATE:
-1. DO NOT add any skill, tool, technology, or certification that is not explicitly mentioned in the original resume
-2. DO NOT invent numeric achievements (e.g., "increased by 30%") unless they exist in original
-3. DO NOT add company names or employment dates not in original
-4. Preserve factual accuracy - only use information provided by the candidate
+CRITICAL_TRUTHFULNESS_RULES = """CRITICAL TRUTHFULNESS RULES - NEVER VIOLATE. A false resume is worse than a weak one:
+1. DO NOT add any skill, tool, technology, framework, language, or certification that is not explicitly present in the original resume, even if the job requires it.
+2. DO NOT invent, add, or alter numeric achievements or metrics (percentages, dollar amounts, team sizes, user counts). Keep every number exactly as it appears in the original; if none exists, do not fabricate one.
+3. DO NOT add or change company names, job titles, employment dates, degrees, or institutions.
+4. DO NOT inflate seniority, scope, or ownership (e.g. changing "contributed to" into "led", or "assisted" into "owned") beyond what the original states.
+5. DO NOT add responsibilities, projects, or accomplishments the candidate did not describe.
+6. You MAY rephrase, reorder, and re-emphasize the candidate's real experience, and mirror the job's terminology ONLY for skills and work the candidate genuinely has. Reframing true content is allowed; inventing content is not.
+7. When unsure whether something is supported by the original, leave it out.
 """
 
-IMPROVE_RESUME_PROMPT_FULL = """Tailor this resume for the job. Output ONLY the JSON object, no other text.
+IMPROVE_RESUME_PROMPT_FULL = """You are an expert resume writer and ATS optimization specialist. Rewrite the candidate's resume so it targets the job below and passes automated ATS screening, while staying 100% truthful. Output ONLY the JSON object, no other text, no markdown fences.
 
 {critical_truthfulness_rules}
 
-Rules:
-- Rephrase content to highlight relevant experience
-- DO NOT invent new information
-- Preserve original date ranges exactly - do not modify years
-- Do NOT use em dash ("—") anywhere in the writing
-- Optimize for ATS parsing: Use standard section headings, weave job keywords naturally into the experience descriptions without keyword stuffing, and ensure the summary matches the core requirements of the job.
+ATS OPTIMIZATION:
+- Mirror the job's exact terminology for skills and experience the candidate genuinely has. If the candidate knows "Kubernetes" and the JD says "K8s", use the JD's surface form. Matching literal strings is what an ATS scores.
+- Weave the provided keywords into the summary, skills, and experience bullets NATURALLY. No keyword stuffing, no lists of disconnected terms, no repeating a keyword just to hit a count.
+- Ensure required skills the candidate actually possesses appear in `additional.technicalSkills` using the JD's phrasing. Do not add skills the candidate lacks (see truthfulness rules).
+- Keep standard, machine-readable section names; do not rename core sections.
+
+SUMMARY (2-4 sentences):
+- Open by positioning the candidate for THIS role, using the target job title/level where truthful.
+- Front-load the most relevant real skills and the strongest quantified achievement that already exists in the resume.
+
+EXPERIENCE BULLETS:
+- Rewrite each bullet as: strong past-tense action verb + what was done + tool/skill + measurable impact (only if a metric already exists in the original).
+- Lead with the accomplishments and technologies most relevant to the job; reorder bullets within a role to surface relevance.
+- Vary action verbs; avoid weak openers ("Responsible for", "Worked on", "Helped with").
+- Keep each bullet to one tight sentence.
+
+PRIORITIZATION:
+- Emphasize the experiences, projects, and skills most relevant to the job. Do not delete the candidate's real experience, but you may de-emphasize less relevant bullets by shortening them.
+
+STYLE / ANTI-AI-DETECTION:
+- Do NOT use the em dash ("—") anywhere. Use commas, periods, or parentheses.
+- Avoid filler and AI-tell phrasing: "leveraged", "spearheaded", "dynamic", "results-driven", "passionate", "seamlessly", "cutting-edge", "in today's fast-paced world", "a proven track record".
+- Write in a concise, professional, human voice. No first-person pronouns ("I", "my") in bullets.
+- Preserve original date ranges exactly; do not modify years.
 
 Job Description:
 {job_description}
 
-Keywords to emphasize:
+Keywords to emphasize (use the exact surface forms, only where truthful):
 {job_keywords}
 
 Original Resume:
 {original_resume}
 
-Output in this JSON format:
+Output in this JSON format (shape only, do not copy the sample values):
 {schema}"""
 
-GENERATE_TITLE_PROMPT = """Extract the job title and company name from this job description.
-Format: "Role @ Company" (e.g., "Senior Frontend Engineer @ Stripe")
+GENERATE_TITLE_PROMPT = """Extract the job title and hiring company from this job description.
+Format the output as exactly "Role @ Company" (e.g., "Senior Frontend Engineer @ Stripe").
+- Use the most specific role title stated in the posting.
+- If the company name is not stated, output just the role with no "@".
+- Do not add seniority, location, or any words that are not in the posting.
+- Keep it under 60 characters.
 Job Description:
 {job_description}
-Output the title only, nothing else."""
+Output the title line only, nothing else."""
 
 # ==========================================
 # 4. PARSING & IMPROVEMENT CORE LOGIC
@@ -956,17 +1001,23 @@ def _check_for_truncation(data: dict[str, Any]) -> None:
 async def parse_resume_to_json(resume_text: str) -> dict[str, Any]:
     sanitized = _sanitize_user_input(resume_text)
     prompt = PARSE_RESUME_PROMPT.format(schema=RESUME_SCHEMA, resume_text=sanitized)
-    return await complete_json(prompt, "You are a professional resume parser.")
+    return await complete_json(
+        prompt,
+        "You are a precise resume parser. You transcribe the candidate's content faithfully into JSON and never invent, embellish, or omit information.",
+    )
 
 async def extract_job_keywords(job_description: str) -> dict[str, Any]:
     sanitized = _sanitize_user_input(job_description)
     prompt = EXTRACT_KEYWORDS_PROMPT.format(job_description=sanitized)
-    return await complete_json(prompt, "You are an expert job description analyzer.")
+    return await complete_json(
+        prompt,
+        "You are an expert ATS and technical recruiting analyst. You extract requirements and ATS-critical keywords using the exact surface forms found in the job description.",
+    )
 
 async def generate_job_title(job_description: str) -> str:
     sanitized = _sanitize_user_input(job_description)
     prompt = GENERATE_TITLE_PROMPT.format(job_description=sanitized)
-    title = await complete(prompt, "You are a precise title parser.")
+    title = await complete(prompt, "You are a precise title parser. You output only a single 'Role @ Company' line with no extra words.")
     return title.strip().strip('"').strip("'")
 
 async def improve_resume(
@@ -982,7 +1033,11 @@ async def improve_resume(
         original_resume=original_resume,
         schema=RESUME_SCHEMA,
     )
-    result = await complete_json(prompt, "You are an expert resume editor. Output valid JSON.", max_tokens=8192)
+    result = await complete_json(
+        prompt,
+        "You are an expert resume writer and ATS optimization specialist. You tailor resumes to job descriptions truthfully, never fabricating skills or experience, and output valid JSON.",
+        max_tokens=8192,
+    )
     _check_for_truncation(result)
     validated = ResumeData.model_validate(result)
     return validated.model_dump()

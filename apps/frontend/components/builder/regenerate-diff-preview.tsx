@@ -180,7 +180,7 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
                     ? t('builder.regenerate.diffPreview.collapseItem', { item: getItemLabel(item) })
                     : t('builder.regenerate.diffPreview.expandItem', { item: getItemLabel(item) })
                 }
-                className="w-full p-4 flex items-center justify-between bg-[#F0F0E8] hover:bg-[#E5E5E0] transition-colors"
+                className="w-full p-4 flex items-center justify-between bg-zinc-50 hover:bg-zinc-100 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   {getItemIcon(item.item_type)}

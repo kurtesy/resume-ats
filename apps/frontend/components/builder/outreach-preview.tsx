@@ -46,7 +46,7 @@ export function OutreachPreview({ content, className }: OutreachPreviewProps) {
         {content ? (
           <div className="space-y-4">
             {/* Message Bubble Style */}
-            <div className="bg-[#F5F5F0] border-2 border-black p-4 shadow-[2px_2px_0px_0px_#000000]">
+            <div className="bg-[#F5F5F0] border-2 border-black p-4">
               <p className="font-sans text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
             </div>
 

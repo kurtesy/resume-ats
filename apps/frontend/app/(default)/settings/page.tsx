@@ -61,7 +61,7 @@ const PROVIDERS: LLMProvider[] = [
 ];
 
 const SEGMENTED_BUTTON_BASE =
-  'border border-black font-mono transition-all duration-150 ease-out shadow-[2px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none disabled:cursor-not-allowed disabled:opacity-50';
+  'border border-black font-mono transition-all duration-150 ease-out hover:shadow-none disabled:cursor-not-allowed disabled:opacity-50';
 const SEGMENTED_BUTTON_ACTIVE = 'bg-blue-700 text-white border-black hover:bg-blue-800';
 const SEGMENTED_BUTTON_INACTIVE = 'bg-white text-black hover:bg-[#E5E5E0]';
 
@@ -485,15 +485,8 @@ export default function SettingsPage() {
   const requiresApiKey = providerInfo.requiresKey ?? true;
 
   return (
-    <div
-      className="flex flex-col items-center justify-start p-6 md:p-12 min-h-screen overflow-y-auto"
-      style={{
-        backgroundImage:
-          'linear-gradient(rgba(29, 78, 216, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(29, 78, 216, 0.05) 1px, transparent 1px)',
-        backgroundSize: '40px 40px',
-      }}
-    >
-      <div className="w-full max-w-4xl border border-black bg-[#F0F0E8] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)]">
+    <div className="flex flex-col items-center justify-start p-6 md:p-12 min-h-screen overflow-y-auto bg-white bg-grid-lines">
+      <div className="w-full max-w-4xl border border-black bg-white shadow-none">
         {/* Header */}
         <div className="border-b border-black p-8 bg-white flex justify-between items-start">
           <div>
@@ -516,7 +509,7 @@ export default function SettingsPage() {
         <div className="p-8 space-y-10">
           {/* API Key Not Configured Warning */}
           {!statusLoading && systemStatus && !systemStatus.llm_configured && (
-            <div className="border-2 border-amber-500 bg-amber-50 p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
+            <div className="border-2 border-amber-500 bg-amber-50 p-4">
               <div className="flex items-start gap-3">
                 <div className="w-3 h-3 bg-amber-500 mt-1 shrink-0"></div>
                 <div className="flex-1">
@@ -585,7 +578,7 @@ export default function SettingsPage() {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {/* LLM Status */}
-                <div className="border border-black bg-white p-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
+                <div className="border border-black bg-white p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Server className="w-4 h-4 text-gray-500" />
                     <span className="font-mono text-xs uppercase text-gray-500">
@@ -607,7 +600,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Database Status */}
-                <div className="border border-black bg-white p-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
+                <div className="border border-black bg-white p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Database className="w-4 h-4 text-gray-500" />
                     <span className="font-mono text-xs uppercase text-gray-500">
@@ -623,7 +616,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Resumes Count */}
-                <div className="border border-black bg-white p-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
+                <div className="border border-black bg-white p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <FileText className="w-4 h-4 text-gray-500" />
                     <span className="font-mono text-xs uppercase text-gray-500">
@@ -636,7 +629,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Jobs Count */}
-                <div className="border border-black bg-white p-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
+                <div className="border border-black bg-white p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Briefcase className="w-4 h-4 text-gray-500" />
                     <span className="font-mono text-xs uppercase text-gray-500">
@@ -653,7 +646,7 @@ export default function SettingsPage() {
             {/* Additional Stats Row */}
             {systemStatus && (
               <div className="grid grid-cols-2 gap-4">
-                <div className="border border-black bg-white p-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
+                <div className="border border-black bg-white p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="w-4 h-4 text-gray-500" />
                     <span className="font-mono text-xs uppercase text-gray-500">
@@ -664,7 +657,7 @@ export default function SettingsPage() {
                     {systemStatus.database_stats.total_improvements}
                   </span>
                 </div>
-                <div className="border border-black bg-white p-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
+                <div className="border border-black bg-white p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <FileText className="w-4 h-4 text-gray-500" />
                     <span className="font-mono text-xs uppercase text-gray-500">
@@ -874,7 +867,7 @@ export default function SettingsPage() {
                           <p className="font-mono text-[10px] uppercase tracking-wider text-gray-600">
                             {item.label}
                           </p>
-                          <pre className="mt-1 whitespace-pre-wrap rounded-none border border-black bg-white p-3 text-xs text-gray-800 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
+                          <pre className="mt-1 whitespace-pre-wrap rounded-none border border-black bg-white p-3 text-xs text-gray-800">
                             {item.value}
                           </pre>
                         </div>

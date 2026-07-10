@@ -593,25 +593,18 @@ const ResumeBuilderContent = () => {
   };
 
   return (
-    <div
-      className="h-screen w-full bg-[#F0F0E8] flex justify-center items-center p-4 md:p-8"
-      style={{
-        backgroundImage:
-          'linear-gradient(rgba(29, 78, 216, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(29, 78, 216, 0.1) 1px, transparent 1px)',
-        backgroundSize: '40px 40px',
-      }}
-    >
+    <div className="h-screen w-full bg-white bg-grid-lines flex justify-center items-center p-4 md:p-8">
       {/* Main Container */}
-      <div className="w-full h-full max-w-[90%] md:max-w-[95%] xl:max-w-[1800px] border border-black bg-[#F0F0E8] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] flex flex-col">
+      <div className="w-full h-full max-w-[90%] md:max-w-[95%] xl:max-w-[1800px] border border-black bg-white shadow-none flex flex-col">
         {/* Header Section */}
-        <div className="border-b border-black p-6 md:p-8 bg-[#F0F0E8] no-print">
+        <div className="border-b border-black p-6 md:p-8 bg-white no-print">
           {/* Top Row: Back button and Actions */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
             <div>
               <Button
                 variant="link"
                 onClick={() => router.push('/dashboard')}
-                className="mb-2 -ml-1"
+                className="mb-2 -ml-1 text-black"
               >
                 <ArrowLeft className="w-4 h-4" />
                 {t('nav.backToDashboard')}
@@ -620,7 +613,7 @@ const ResumeBuilderContent = () => {
                 {t('nav.builder')}
               </h1>
               <div className="mt-3 flex items-center gap-3">
-                <p className="text-sm font-mono text-blue-700 uppercase tracking-wide font-bold">
+                <p className="text-sm font-mono text-zinc-500 uppercase tracking-wide font-bold">
                   {'// '}
                   {resumeId ? t('builder.editMode') : t('builder.createAndPreview')}
                 </p>
@@ -737,7 +730,7 @@ const ResumeBuilderContent = () => {
         {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 bg-black gap-[1px] flex-1 min-h-0">
           {/* Left Panel: Editor */}
-          <div className="bg-[#F0F0E8] p-6 md:p-8 overflow-y-auto no-print">
+          <div className="bg-white p-6 md:p-8 overflow-y-auto no-print">
             <div className="max-w-3xl mx-auto space-y-6">
               <div className="flex items-center gap-2 border-b-2 border-black pb-2">
                 <div className="w-3 h-3 bg-blue-700"></div>
@@ -805,7 +798,7 @@ const ResumeBuilderContent = () => {
                     </p>
                   </div>
 
-                  <div className="border-2 border-black bg-[#F0F0E8] p-4">
+                  <div className="border border-black bg-zinc-50 p-4">
                     <h3 className="font-mono text-sm font-bold uppercase mb-2">
                       {t('builder.jdMatch.highlightedKeywordsTitle')}
                     </h3>
@@ -925,7 +918,7 @@ const ResumeBuilderContent = () => {
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#F0F0E8] flex justify-between items-center font-mono text-xs text-blue-700 border-t border-black no-print">
+        <div className="p-4 bg-white flex justify-between items-center font-mono text-xs text-black border-t border-black no-print">
           <span className="uppercase font-bold flex items-center gap-2">
             <Image
               src="/logo.svg"
