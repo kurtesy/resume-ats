@@ -20,6 +20,12 @@ export default function Hero() {
         </h1>
 
         <div className="flex flex-col gap-4 md:flex-row md:gap-12">
+          <Link href="/dashboard" className={buttonClass}>
+            {t('home.launchApp')}
+          </Link>
+          <Link href="/tailor" className={buttonClass}>
+            Tailor Resume
+          </Link>
           <a
             href="https://github.com/srbhr/Resume-Matcher"
             target="_blank"
@@ -36,9 +42,6 @@ export default function Hero() {
           >
             {t('home.docs')}
           </a>
-          <Link href="/dashboard" className={buttonClass}>
-            {t('home.launchApp')}
-          </Link>
         </div>
       </div>
     </section>
