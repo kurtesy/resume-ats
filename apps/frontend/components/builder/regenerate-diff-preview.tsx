@@ -265,7 +265,7 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
             {t('builder.regenerate.diffPreview.rejectButton')}
           </Button>
           <Button
-            variant="success"
+            variant="ghost"
             onClick={onAccept}
             disabled={isApplying}
             className="rounded-none"

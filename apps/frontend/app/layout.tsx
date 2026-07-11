@@ -1,17 +1,24 @@
 import type { Metadata } from 'next';
-import { Geist, Space_Grotesk } from 'next/font/google';
+import { Geist, Playfair_Display, Space_Grotesk } from 'next/font/google';
 import './(default)/css/globals.css';
 
-const spaceGrotesk = Space_Grotesk({
-  variable: '--font-space-grotesk',
+const geist = Geist({
+  variable: '--font-sans',
   subsets: ['latin'],
   display: 'swap',
 });
 
-const geist = Geist({
-  variable: '--font-geist',
+const spaceGrotesk = Space_Grotesk({
+  variable: '--font-mono',
   subsets: ['latin'],
   display: 'swap',
+});
+
+const playfairDisplay = Playfair_Display({
+  variable: '--font-playfair-display',
+  subsets: ['latin'],
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
 });
 
 export const metadata: Metadata = {
@@ -25,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-US" className="h-full" suppressHydrationWarning>
       <body
-        className={`${geist.variable} ${spaceGrotesk.variable} antialiased bg-[#F0F0E8] text-gray-900 min-h-full`}
+        className={`${geist.variable} ${spaceGrotesk.variable} ${playfairDisplay.variable} antialiased min-h-full`}
       >
         {children}
       </body>

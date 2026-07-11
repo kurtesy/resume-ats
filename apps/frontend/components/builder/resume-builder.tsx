@@ -95,7 +95,7 @@ const ResumeBuilderContent = () => {
       variant: NonNullable<ConfirmDialogProps['variant']> = 'default',
       title?: string
     ) => {
-      const fallbackTitle = variant === 'success' ? t('common.success') : t('common.error');
+      const fallbackTitle = variant === 'ghost' ? t('common.success') : t('common.error');
       setNotificationDialog({
         title: title ?? fallbackTitle,
         description,
@@ -438,7 +438,7 @@ const ResumeBuilderContent = () => {
       const blob = await downloadResumePdf(resumeId, templateSettings, uiLanguage);
       const filename = sanitizeFilename(resumeTitle, resumeId, 'resume');
       downloadBlobAsFile(blob, filename);
-      showNotification(t('builder.alerts.downloadSuccess'), 'success');
+      showNotification(t('builder.alerts.downloadSuccess'), 'ghost');
     } catch (error) {
       console.error('Failed to download resume:', error);
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
@@ -465,7 +465,7 @@ const ResumeBuilderContent = () => {
     try {
       setIsCoverLetterSaving(true);
       await updateCoverLetter(resumeId, coverLetter);
-      showNotification(t('builder.alerts.coverLetterSaveSuccess'), 'success');
+      showNotification(t('builder.alerts.coverLetterSaveSuccess'), 'ghost');
     } catch (error) {
       console.error('Failed to save cover letter:', error);
       showNotification(t('builder.alerts.coverLetterSaveFailed'), 'danger');
@@ -514,7 +514,7 @@ const ResumeBuilderContent = () => {
     try {
       setIsOutreachSaving(true);
       await updateOutreachMessage(resumeId, outreachMessage);
-      showNotification(t('builder.alerts.outreachSaveSuccess'), 'success');
+      showNotification(t('builder.alerts.outreachSaveSuccess'), 'ghost');
     } catch (error) {
       console.error('Failed to save outreach message:', error);
       showNotification(t('builder.alerts.outreachSaveFailed'), 'danger');
@@ -640,7 +640,7 @@ const ResumeBuilderContent = () => {
                     {t('builder.regenerate.buttonLabel')}
                   </Button>
                   <Button
-                    variant="warning"
+                    variant="secondary"
                     size="sm"
                     onClick={handleReset}
                     disabled={!hasUnsavedChanges}
@@ -653,7 +653,7 @@ const ResumeBuilderContent = () => {
                     {isSaving ? t('common.saving') : t('common.save')}
                   </Button>
                   <Button
-                    variant="success"
+                    variant="ghost"
                     size="sm"
                     onClick={handleDownload}
                     disabled={!resumeId || isDownloading}
@@ -681,7 +681,7 @@ const ResumeBuilderContent = () => {
                     {t('coverLetter.regenerate')}
                   </Button>
                   <Button
-                    variant="success"
+                    variant="ghost"
                     size="sm"
                     onClick={handleDownloadCoverLetter}
                     disabled={!resumeId || isDownloading}
@@ -708,7 +708,7 @@ const ResumeBuilderContent = () => {
                     )}
                     {t('outreach.regenerate')}
                   </Button>
-                  <Button variant="success" size="sm" onClick={handleCopyOutreach}>
+                  <Button variant="ghost" size="sm" onClick={handleCopyOutreach}>
                     {isCopied ? (
                       <>
                         <Check className="w-4 h-4" />
@@ -934,7 +934,7 @@ const ResumeBuilderContent = () => {
               <div className="w-2 h-2 bg-green-700"></div>
               <span className="uppercase">
                 {templateSettings.template === 'swiss-single' ||
-                templateSettings.template === 'modern'
+                  templateSettings.template === 'modern'
                   ? t('builder.footer.singleColumn')
                   : t('builder.footer.twoColumn')}
               </span>

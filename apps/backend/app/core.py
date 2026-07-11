@@ -30,11 +30,17 @@ from sqlalchemy import create_engine, Column, String, Boolean, JSON, Integer, Te
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 # ==========================================
-# 1. DATABASE LAYER (SQLALCHEMY SQLITE)
+# 1. DATABASE LAYER (SQLALCHEMY POSTGRESQL / SQLITE)
 # ==========================================
 
-db_url = f"sqlite:///{settings.data_dir}/database.sqlite"
-engine = create_engine(db_url, connect_args={"check_same_thread": False})
+db_url = settings.get_database_url()
+is_postgres = db_url.startswith("postgres")
+
+if is_postgres:
+    engine = create_engine(db_url, echo=False, pool_pre_ping=True, pool_recycle=3600)
+else:
+    engine = create_engine(db_url, connect_args={"check_same_thread": False})
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -85,12 +91,13 @@ def _model_to_dict(model_instance) -> dict[str, Any] | None:
     return d
 
 class Database:
-    """SQLAlchemy SQLite wrapper for resume matcher data."""
+    """SQLAlchemy database wrapper (PostgreSQL or SQLite) for resume matcher data."""
 
     _master_resume_lock = asyncio.Lock()
 
     def __init__(self):
-        settings.data_dir.mkdir(parents=True, exist_ok=True)
+        if not is_postgres:
+            settings.data_dir.mkdir(parents=True, exist_ok=True)
         Base.metadata.create_all(bind=engine)
 
     def close(self) -> None:

@@ -134,6 +134,9 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    # Database Configuration
+    database_url: str | None = None  # PostgreSQL: postgres://user:pass@host/db, leave empty for SQLite
+
     # LLM Configuration
     llm_provider: Literal[
         "openai", "anthropic", "openrouter", "gemini", "deepseek", "ollama"
@@ -186,13 +189,22 @@ class Settings(BaseSettings):
 
     @property
     def db_path(self) -> Path:
-        """Path to TinyDB database file."""
+        """Path to database file (legacy, kept for compatibility)."""
         return self.data_dir / "database.json"
 
     @property
     def config_path(self) -> Path:
         """Path to config storage file."""
         return self.data_dir / "config.json"
+
+    def get_database_url(self) -> str:
+        """Get effective database URL: PostgreSQL if DATABASE_URL set, else SQLite.
+
+        Priority: DATABASE_URL env var > SQLite (local)
+        """
+        if self.database_url:
+            return self.database_url
+        return f"sqlite:///{self.data_dir}/database.sqlite"
 
     def get_effective_api_key(self) -> str:
         """Get the effective API key with config file fallback.
