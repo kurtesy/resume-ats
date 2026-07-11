@@ -1,7 +1,6 @@
 """Vercel serverless entry point for FastAPI application."""
 
 import sys
-import os
 from pathlib import Path
 
 # Add virtual environment site-packages to path (created during build)
