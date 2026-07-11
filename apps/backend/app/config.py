@@ -178,6 +178,18 @@ class Settings(BaseSettings):
             raise ValueError(f"Invalid LOG_LEVEL: {value}. Allowed: {ALLOWED_LOG_LEVELS}")
         return value
 
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v: Any) -> list[str]:
+        """Parse CORS origins from environment variable.
+        Supports comma-separated string (e.g., 'https://foo.com,https://bar.com').
+        """
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        if isinstance(v, list):
+            return [str(origin).strip() for origin in v if str(origin).strip()]
+        return v
+
     # CORS Configuration
     cors_origins: list[str] = [
         "http://localhost:3000",
