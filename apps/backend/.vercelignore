@@ -1,0 +1,10 @@
+# Ignore local venv and cache to avoid bundling
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+.env.local
+*.egg-info
+.git
+.gitignore
