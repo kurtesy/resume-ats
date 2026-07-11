@@ -139,8 +139,10 @@ propcache==0.5.2
     #   yarl
 protobuf==7.35.1
     # via onnxruntime
-psycopg2-binary==2.9.10
+psycopg==3.3.4
     # via rm-backend (pyproject.toml)
+psycopg-binary==3.3.4
+    # via psycopg
 pycparser==3.0
     # via cffi
 pydantic==2.12.5
