@@ -1,5 +1,5 @@
 {
-  "buildCommand": "python -m venv .venv && .venv/bin/pip install --upgrade pip && .venv/bin/pip install --no-cache-dir -r requirements.txt",
+  "buildCommand": "pip install --upgrade pip && pip install --target . --no-cache-dir -r requirements.txt",
   "routes": [
     {
       "src": "/(.*)",
@@ -8,8 +8,6 @@
     }
   ],
   "env": {
-    "PYTHONUNBUFFERED": "1",
-    "VIRTUAL_ENV": ".venv",
-    "PATH": ".venv/bin:$PATH"
+    "PYTHONUNBUFFERED": "1"
   }
 }
