@@ -12,7 +12,6 @@ from uuid import uuid4
 from difflib import SequenceMatcher
 from dataclasses import dataclass
 
-from markitdown import MarkItDown
 from playwright.async_api import async_playwright
 
 import litellm
@@ -893,17 +892,53 @@ Output the title line only, nothing else."""
 # ==========================================
 
 async def parse_document(content: bytes, filename: str) -> str:
-    """Convert PDF/DOCX to Markdown using markitdown."""
+    """Convert PDF/DOCX to text in-memory using pypdf for PDF and standard library zipfile/xml for DOCX."""
     suffix = Path(filename).suffix.lower()
-    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-        tmp.write(content)
-        tmp_path = Path(tmp.name)
-    try:
-        md = MarkItDown()
-        result = md.convert(str(tmp_path))
-        return result.text_content
-    finally:
-        tmp_path.unlink(missing_ok=True)
+    import io
+    import zipfile
+    import xml.etree.ElementTree as ET
+    from pypdf import PdfReader
+
+    if suffix == '.pdf':
+        try:
+            pdf_file = io.BytesIO(content)
+            reader = PdfReader(pdf_file)
+            text_parts = []
+            for page in reader.pages:
+                extracted = page.extract_text()
+                if extracted:
+                    text_parts.append(extracted)
+            return '\n\n'.join(text_parts)
+        except Exception as e:
+            logger.error(f"Failed to parse PDF document in-memory: {e}")
+            raise ValueError(f"Failed to parse PDF document: {e}")
+
+    elif suffix in ('.docx', '.doc'):
+        try:
+            docx_file = io.BytesIO(content)
+            with zipfile.ZipFile(docx_file) as docx:
+                xml_content = docx.read('word/document.xml')
+                root = ET.fromstring(xml_content)
+                namespaces = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+                paragraphs = []
+                for p in root.findall('.//w:p', namespaces):
+                    texts = [t.text for t in p.findall('.//w:t', namespaces) if t.text]
+                    if texts:
+                        paragraphs.append(''.join(texts))
+                return '\n'.join(paragraphs)
+        except Exception as e:
+            logger.error(f"Failed to parse DOCX document in-memory: {e}")
+            raise ValueError(f"Failed to parse DOCX document: {e}")
+
+    elif suffix in ('.txt', '.md'):
+        try:
+            return content.decode('utf-8', errors='ignore')
+        except Exception as e:
+            logger.error(f"Failed to decode text file: {e}")
+            raise ValueError(f"Failed to parse text document: {e}")
+
+    else:
+        raise ValueError(f"Unsupported document format: {suffix}")
 
 async def scrape_linkedin_job(url: str) -> str:
     """Scrapes job description from a LinkedIn job URL using HTTP client with a Playwright fallback."""

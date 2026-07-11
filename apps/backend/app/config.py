@@ -203,7 +203,12 @@ class Settings(BaseSettings):
         Priority: DATABASE_URL env var > SQLite (local)
         """
         if self.database_url:
-            return self.database_url
+            url = self.database_url
+            if url.startswith("postgres://"):
+                url = url.replace("postgres://", "postgresql+psycopg://", 1)
+            elif url.startswith("postgresql://"):
+                url = url.replace("postgresql://", "postgresql+psycopg://", 1)
+            return url
         return f"sqlite:///{self.data_dir}/database.sqlite"
 
     def get_effective_api_key(self) -> str:

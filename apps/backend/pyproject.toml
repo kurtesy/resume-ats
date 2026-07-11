@@ -10,7 +10,7 @@ dependencies = [
     "pydantic==2.12.5",
     "pydantic-settings==2.12.0",
     "litellm==1.81.8",
-    "markitdown==0.1.4",  # Lightweight version without docx support for Vercel
+    "pypdf>=5.0.0",
     "python-dotenv==1.2.1",
     "sqlalchemy==2.0.38",
     "psycopg[binary]>=3.1.0",  # Modern PostgreSQL driver with pre-built binary
