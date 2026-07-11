@@ -183,17 +183,25 @@ class Settings(BaseSettings):
     def parse_cors_origins(cls, v: Any) -> list[str]:
         """Parse CORS origins from environment variable.
         Supports comma-separated string (e.g., 'https://foo.com,https://bar.com').
+        Strips whitespace and trailing slashes to prevent CORS mismatches.
         """
+        def clean_origin(origin: str) -> str:
+            cleaned = origin.strip()
+            if cleaned.endswith("/") and cleaned != "/":
+                cleaned = cleaned[:-1]
+            return cleaned
+
         if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
+            return [clean_origin(org) for org in v.split(",") if org.strip()]
         if isinstance(v, list):
-            return [str(origin).strip() for origin in v if str(origin).strip()]
+            return [clean_origin(str(org)) for org in v if str(org).strip()]
         return v
 
     # CORS Configuration
     cors_origins: list[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "https://resume-ats-pied.vercel.app"
     ]
 
     # Paths
