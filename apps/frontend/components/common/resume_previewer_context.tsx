@@ -57,13 +57,7 @@ export interface ResumeDiffSummary {
 export interface ResumeFieldDiff {
   field_path: string;
   field_type:
-    | 'skill'
-    | 'description'
-    | 'summary'
-    | 'certification'
-    | 'experience'
-    | 'education'
-    | 'project';
+    'skill' | 'description' | 'summary' | 'certification' | 'experience' | 'education' | 'project';
   change_type: 'added' | 'removed' | 'modified';
   original_value?: string;
   new_value?: string;

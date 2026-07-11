@@ -264,12 +264,7 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
             <RefreshCw className="w-4 h-4 mr-2" />
             {t('builder.regenerate.diffPreview.rejectButton')}
           </Button>
-          <Button
-            variant="ghost"
-            onClick={onAccept}
-            disabled={isApplying}
-            className="rounded-none"
-          >
+          <Button variant="ghost" onClick={onAccept} disabled={isApplying} className="rounded-none">
             {isApplying ? (
               <>
                 <span className="animate-spin mr-2">

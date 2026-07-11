@@ -704,8 +704,9 @@ export default function SettingsPage() {
                     <button
                       key={p}
                       onClick={() => handleProviderChange(p)}
-                      className={`px-3 py-2 text-xs uppercase ${SEGMENTED_BUTTON_BASE} ${provider === p ? SEGMENTED_BUTTON_ACTIVE : SEGMENTED_BUTTON_INACTIVE
-                        }`}
+                      className={`px-3 py-2 text-xs uppercase ${SEGMENTED_BUTTON_BASE} ${
+                        provider === p ? SEGMENTED_BUTTON_ACTIVE : SEGMENTED_BUTTON_INACTIVE
+                      }`}
                     >
                       {PROVIDER_INFO[p].name.split(' ')[0]}
                     </button>
@@ -829,10 +830,11 @@ export default function SettingsPage() {
               {/* Health Check Result */}
               {healthCheck && (
                 <div
-                  className={`border p-4 ${healthCheck.healthy
-                    ? 'border-green-300 bg-green-50'
-                    : 'border-red-300 bg-red-50'
-                    }`}
+                  className={`border p-4 ${
+                    healthCheck.healthy
+                      ? 'border-green-300 bg-green-50'
+                      : 'border-red-300 bg-red-50'
+                  }`}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     {healthCheck.healthy ? (

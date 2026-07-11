@@ -144,11 +144,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               {finalCancelLabel}
             </Button>
           )}
-          <Button
-            onClick={handleConfirm}
-            className="rounded-none"
-            disabled={confirmDisabled}
-          >
+          <Button onClick={handleConfirm} className="rounded-none" disabled={confirmDisabled}>
             {finalConfirmLabel}
           </Button>
         </DialogFooter>

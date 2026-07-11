@@ -934,7 +934,7 @@ const ResumeBuilderContent = () => {
               <div className="w-2 h-2 bg-green-700"></div>
               <span className="uppercase">
                 {templateSettings.template === 'swiss-single' ||
-                  templateSettings.template === 'modern'
+                templateSettings.template === 'modern'
                   ? t('builder.footer.singleColumn')
                   : t('builder.footer.twoColumn')}
               </span>
