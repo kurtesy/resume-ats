@@ -1,5 +1,4 @@
 {
-  "buildCommand": "pip install --upgrade pip && pip install --target . --no-cache-dir -r requirements.txt",
   "routes": [
     {
       "src": "/(.*)",

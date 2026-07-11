@@ -11,3 +11,4 @@ from app.main import app
 
 # Export the ASGI app for Vercel
 __all__ = ['app']
+print("Nishant is starting the server!!")
