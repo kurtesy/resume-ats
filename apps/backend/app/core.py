@@ -12,8 +12,6 @@ from uuid import uuid4
 from difflib import SequenceMatcher
 from dataclasses import dataclass
 
-from playwright.async_api import async_playwright
-
 import litellm
 
 from app.config import settings
@@ -941,8 +939,9 @@ async def parse_document(content: bytes, filename: str) -> str:
         raise ValueError(f"Unsupported document format: {suffix}")
 
 async def scrape_linkedin_job(url: str) -> str:
-    """Scrapes job description from a LinkedIn job URL using HTTP client with a Playwright fallback."""
+    """Scrapes job description from a LinkedIn job URL using HTTP clients (urllib with requests fallback)."""
     import urllib.request
+    import requests
     from bs4 import BeautifulSoup
     
     headers = {
@@ -976,51 +975,36 @@ async def scrape_linkedin_job(url: str) -> str:
                 clean_text = re.sub(r'\n{3,}', '\n\n', text)
                 return clean_text
     except Exception as fetch_err:
-        logger.warning(f"Lightweight HTTP fetch failed: {fetch_err}. Falling back to Playwright...")
+        logger.warning(f"Lightweight urllib fetch failed: {fetch_err}. Falling back to requests...")
 
-    # Fallback to Playwright if guest fetch was blocked or failed
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            viewport={"width": 1280, "height": 800}
+    # Fallback to requests if urllib was blocked or failed
+    try:
+        loop = asyncio.get_running_loop()
+        def _fetch_requests():
+            response = requests.get(url, headers=headers, timeout=12)
+            response.raise_for_status()
+            return response.text
+        
+        html = await loop.run_in_executor(None, _fetch_requests)
+        soup = BeautifulSoup(html, 'html.parser')
+        desc_el = (
+            soup.find(class_='show-more-less-html__markup') or 
+            soup.find(class_='jobs-description__content') or 
+            soup.find(class_='jobs-description-content__text') or
+            soup.find(class_='description__text') or
+            soup.find('main')
         )
-        page = await context.new_page()
-        try:
-            await page.goto(url, timeout=20000, wait_until="domcontentloaded")
-            await page.wait_for_timeout(2000)
-            
-            selectors = [
-                ".show-more-less-html__markup",
-                ".jobs-description__content",
-                ".jobs-description-content__text",
-                ".core-section-container__content",
-                ".description__text",
-                "main"
-            ]
-            
-            text = ""
-            for sel in selectors:
-                locator = page.locator(sel)
-                if await locator.count() > 0:
-                    text = await locator.first.inner_text()
-                    if text.strip() and len(text.strip()) > 100:
-                        break
-            
-            if not text.strip():
-                text = await page.inner_text("body")
-                
-            clean_text = text.strip()
-            if not clean_text:
-                raise ValueError("Could not extract any text content from the URL")
-                
-            clean_text = re.sub(r'\n{3,}', '\n\n', clean_text)
-            return clean_text
-        except Exception as e:
-            logger.error(f"Playwright scraping failed: {e}")
-            raise ValueError(f"Failed to scrape LinkedIn job: {e}")
-        finally:
-            await browser.close()
+        
+        if desc_el:
+            text = desc_el.get_text('\n').strip()
+            if len(text) > 100:
+                clean_text = re.sub(r'\n{3,}', '\n\n', text)
+                return clean_text
+        
+        raise ValueError("Could not find any job description in HTML structure.")
+    except Exception as e:
+        logger.error(f"HTTP scraping failed: {e}")
+        raise ValueError(f"Failed to scrape LinkedIn job description: {e}")
 
 _INJECTION_PATTERNS = [
     r"ignore\s+(all\s+)?previous\s+instructions",
