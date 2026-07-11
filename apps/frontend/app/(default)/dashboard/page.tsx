@@ -358,7 +358,7 @@ export default function DashboardPage() {
                   variant="interactive"
                   className="aspect-square h-full hover:bg-primary hover:text-canvas"
                 >
-                  <div className="flex-1 flex flex-col justify-between pointer-events-none">
+                  <div className="flex-1 flex flex-col justify-between pointer-events-none text-gray-100">
                     <div className="w-14 h-14 border-2 border-current flex items-center justify-center mb-4">
                       <span className="text-2xl leading-none relative top-[-2px]">+</span>
                     </div>

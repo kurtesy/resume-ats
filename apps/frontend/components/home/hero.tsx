@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import { useTranslations } from '@/lib/i18n';
 
@@ -26,14 +25,6 @@ export default function Hero() {
           <Link href="/tailor" className={buttonClass}>
             Tailor Resume
           </Link>
-          <a
-            href="https://github.com/srbhr/Resume-Matcher"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonClass}
-          >
-            GitHub
-          </a>
           <a
             href="https://resumematcher.fyi"
             target="_blank"
