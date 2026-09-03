@@ -1,0 +1,31 @@
+apps/frontend/app/(default)/resumes/[id]/page.tsx
+  s_4433c634c20feb::t_e20a6024400e61 166
+  s_4433c634c20feb::t_013281b6ff6387 21
+apps/frontend/lib/utils/download.ts
+  s_4433c634c20feb::t_af3422130bdc15 31-43,45,48-50,56-60
+  s_4433c634c20feb::t_59da8b10ef89fc 28-30,54-55
+  s_4433c634c20feb::t_e87f8395acc259 44,46-47,51-53
+  s_4433c634c20feb::t_7d26e73fd79b04 27
+apps/frontend/components/builder/resume-builder.tsx
+  s_4433c634c20feb::t_53e192ec7d4899 49
+  s_4433c634c20feb::t_b6f25b3449e933 442
+  s_4433c634c20feb::t_5c24f1be822a29 470
+apps/frontend/messages/en.json
+  s_4433c634c20feb::t_048012a932b407 32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "dc745b17ea25f8ca980900fdc04e46bf243f39c3",
+  "prompts": {},
+  "sessions": {
+    "s_4433c634c20feb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c35a905c-682d-4e7e-8c98-c38b52dd7c73",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "kurtesy <np210291@gmail.com>"
+    }
+  }
+}
