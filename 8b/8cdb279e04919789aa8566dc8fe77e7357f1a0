@@ -1,0 +1,31 @@
+apps/frontend/app/print/resumes/[id]/page.tsx
+  s_4433c634c20feb::t_5b3e87a83f2cb0 82-95
+apps/frontend/app/print/cover-letter/[id]/page.tsx
+  s_4433c634c20feb::t_9cd8ad4feb9ae8 43-56
+docs/ENVIRONMENT_EXAMPLES.md
+  s_247d731b044bb0::t_dd8caf51527be2 1-209
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "8b8cdb279e04919789aa8566dc8fe77e7357f1a0",
+  "prompts": {},
+  "sessions": {
+    "s_247d731b044bb0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c02531d4-0151-49f1-b518-362b0cd296a5",
+        "model": "unknown"
+      },
+      "human_author": "kurtesy <np210291@gmail.com>"
+    },
+    "s_4433c634c20feb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c35a905c-682d-4e7e-8c98-c38b52dd7c73",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "kurtesy <np210291@gmail.com>"
+    }
+  }
+}
