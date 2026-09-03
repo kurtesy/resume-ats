@@ -18,7 +18,7 @@ import { EnrichmentModal } from '@/components/enrichment/enrichment-modal';
 import { useTranslations } from '@/lib/i18n';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
-import { openUrlInNewTab } from '@/lib/utils/download';
+import { printViaIframe } from '@/lib/utils/download';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
 
@@ -163,11 +163,7 @@ export default function ResumeViewerPage() {
 
   const handleDownload = () => {
     const printUrl = getResumePrintUrl(resumeId, undefined, uiLanguage);
-    const didOpen = openUrlInNewTab(printUrl);
-    if (!didOpen) {
-      alert(t('common.popupBlocked', { url: printUrl }));
-      return;
-    }
+    printViaIframe(printUrl);
     setShowDownloadSuccessDialog(true);
   };
 

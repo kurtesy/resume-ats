@@ -46,7 +46,7 @@ import { useTranslations } from '@/lib/i18n';
 import { type TemplateSettings, DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
-import { openUrlInNewTab } from '@/lib/utils/download';
+import { printViaIframe } from '@/lib/utils/download';
 import type { RegenerateItemInput } from '@/lib/api/enrichment';
 
 type TabId = 'resume' | 'cover-letter' | 'outreach' | 'jd-match';
@@ -439,10 +439,7 @@ const ResumeBuilderContent = () => {
       return;
     }
     const printUrl = getResumePrintUrl(resumeId, templateSettings, uiLanguage);
-    const didOpen = openUrlInNewTab(printUrl);
-    if (!didOpen) {
-      showNotification(t('common.popupBlocked', { url: printUrl }), 'warning');
-    }
+    printViaIframe(printUrl);
   };
 
   // Cover letter handlers
@@ -470,10 +467,7 @@ const ResumeBuilderContent = () => {
       return;
     }
     const printUrl = getCoverLetterPrintUrl(resumeId, templateSettings.pageSize, uiLanguage);
-    const didOpen = openUrlInNewTab(printUrl);
-    if (!didOpen) {
-      showNotification(t('common.popupBlocked', { url: printUrl }), 'warning');
-    }
+    printViaIframe(printUrl);
   };
 
   // Outreach handlers

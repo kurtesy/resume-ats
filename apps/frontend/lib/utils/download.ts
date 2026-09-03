@@ -25,6 +25,40 @@ export function openUrlInNewTab(url: string): boolean {
 }
 
 /**
+ * Prints a same-origin page (e.g. a /print/* route, with ?autoprint=true) via a
+ * hidden iframe. Never opens a new tab/window, so browser popup blockers never
+ * trigger. The page itself calls window.print() once loaded (see PrintAutoTrigger).
+ */
+export function printViaIframe(url: string): void {
+  if (typeof document === 'undefined') return;
+
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  iframe.setAttribute('aria-hidden', 'true');
+
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    iframe.remove();
+  };
+
+  iframe.onload = () => {
+    iframe.contentWindow?.addEventListener('afterprint', cleanup);
+  };
+  // Fallback cleanup in case afterprint never fires (e.g. dialog dismissed via Esc in some browsers).
+  setTimeout(cleanup, 60_000);
+
+  document.body.appendChild(iframe);
+  iframe.src = url;
+}
+
+/**
  * Sanitize a resume title for use as a filename
  * - Removes/replaces invalid filename characters
  * - Truncates to reasonable length
