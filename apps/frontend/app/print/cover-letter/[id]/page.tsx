@@ -40,9 +40,20 @@ interface CoverLetterData {
 }
 
 async function fetchCoverLetterData(resumeId: string): Promise<CoverLetterData> {
-  const res = await fetch(`${API_BASE}/resumes?resume_id=${encodeURIComponent(resumeId)}`, {
-    cache: 'no-store',
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/resumes?resume_id=${encodeURIComponent(resumeId)}`, {
+      cache: 'no-store',
+    });
+  } catch (error) {
+    console.error('Print page could not reach the backend API:', {
+      apiBase: API_BASE,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+    throw new Error(
+      'Could not reach the backend API. Check that NEXT_PUBLIC_API_URL is set correctly.'
+    );
+  }
   if (!res.ok) {
     throw new Error(`Failed to load resume (status ${res.status}).`);
   }
