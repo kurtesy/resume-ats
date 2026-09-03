@@ -70,7 +70,7 @@ class JobModel(Base):
 
 class ImprovementModel(Base):
     __tablename__ = "improvements"
-    
+
     request_id = Column(String, primary_key=True, index=True)
     username = Column(String, default="default", index=True)
     original_resume_id = Column(String, nullable=False)
@@ -78,6 +78,35 @@ class ImprovementModel(Base):
     job_id = Column(String, nullable=False)
     improvements = Column(JSON, nullable=False)
     created_at = Column(String, nullable=False)
+
+class AppConfigModel(Base):
+    """Single-row key-value store for app-wide settings (feature flags, LLM config, API keys).
+
+    Replaces the old local-file config.json, which broke on Vercel's read-only filesystem.
+    """
+    __tablename__ = "app_config"
+
+    key = Column(String, primary_key=True, index=True)
+    value = Column(JSON, nullable=False)
+
+
+def load_app_config() -> dict[str, Any]:
+    Base.metadata.create_all(bind=engine)
+    with SessionLocal() as session:
+        row = session.get(AppConfigModel, "default")
+        return dict(row.value) if row else {}
+
+
+def save_app_config(config: dict[str, Any]) -> None:
+    Base.metadata.create_all(bind=engine)
+    with SessionLocal() as session:
+        row = session.get(AppConfigModel, "default")
+        if row:
+            row.value = config
+        else:
+            row = AppConfigModel(key="default", value=config)
+            session.add(row)
+        session.commit()
 
 def _model_to_dict(model_instance) -> dict[str, Any] | None:
     if not model_instance:

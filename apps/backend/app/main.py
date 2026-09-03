@@ -230,8 +230,8 @@ async def put_config_features(req: FeatureConfigRequest):
         stored["enable_outreach_message"] = req.enable_outreach_message
     save_config_file(stored)
     return FeatureConfigResponse(
-        enable_cover_letter=stored.get("enable_cover_letter"),
-        enable_outreach_message=stored.get("enable_outreach_message")
+        enable_cover_letter=stored.get("enable_cover_letter", False),
+        enable_outreach_message=stored.get("enable_outreach_message", False)
     )
 
 @app.get("/api/v1/config/language", response_model=LanguageConfigResponse)
@@ -251,8 +251,8 @@ async def put_config_language(req: LanguageConfigRequest):
         stored["content_language"] = req.content_language
     save_config_file(stored)
     return LanguageConfigResponse(
-        ui_language=stored.get("ui_language"),
-        content_language=stored.get("content_language")
+        ui_language=stored.get("ui_language", "en"),
+        content_language=stored.get("content_language", "en")
     )
 
 @app.get("/api/v1/config/api-keys", response_model=ApiKeyStatusResponse)

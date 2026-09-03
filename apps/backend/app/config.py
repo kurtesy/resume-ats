@@ -1,6 +1,5 @@
 """Application configuration using pydantic-settings."""
 
-import json
 from pathlib import Path
 from typing import Any, Literal
 
@@ -8,34 +7,29 @@ from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-# Path to config file for API key persistence
-CONFIG_FILE_PATH = Path(__file__).parent.parent / "data" / "config.json"
 ALLOWED_LOG_LEVELS = ("CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG")
 
 
 def load_config_file() -> dict[str, Any]:
-    """Load configuration from config.json file.
+    """Load app configuration (feature flags, LLM config, API keys) from the database.
 
     Returns:
-        Dictionary with configuration values, empty dict if file doesn't exist.
+        Dictionary with configuration values, empty dict if none stored yet.
     """
-    if CONFIG_FILE_PATH.exists():
-        try:
-            return json.loads(CONFIG_FILE_PATH.read_text())
-        except (json.JSONDecodeError, OSError):
-            return {}
-    return {}
+    from app.core import load_app_config
+
+    return load_app_config()
 
 
 def save_config_file(config: dict[str, Any]) -> None:
-    """Save configuration to config.json file.
+    """Save app configuration (feature flags, LLM config, API keys) to the database.
 
     Args:
         config: Dictionary with configuration values to save.
     """
-    # Ensure data directory exists
-    CONFIG_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    CONFIG_FILE_PATH.write_text(json.dumps(config, indent=2))
+    from app.core import save_app_config
+
+    save_app_config(config)
 
 
 def get_api_keys_from_config() -> dict[str, str]:
