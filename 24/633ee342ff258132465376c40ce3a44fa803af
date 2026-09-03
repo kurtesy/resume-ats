@@ -1,0 +1,28 @@
+apps/frontend/components/builder/resume-builder.tsx
+  s_4433c634c20feb::t_7890216ffc6be2 813,818
+  s_4433c634c20feb::t_dce0c6d9a84202 41
+  s_4433c634c20feb::t_e4f4149f532c5f 156-167
+apps/backend/app/main.py
+  s_4433c634c20feb::t_ed5a76ec4c1dd5 47
+  s_4433c634c20feb::t_9f4820475803ea 64-65
+  s_4433c634c20feb::t_5cdd8237b52be3 552-593
+apps/backend/app/core.py
+  s_4433c634c20feb::t_d306cf4c48caf9 1120-1145
+  s_4433c634c20feb::t_01b071a7ff7917 917-958
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "24633ee342ff258132465376c40ce3a44fa803af",
+  "prompts": {},
+  "sessions": {
+    "s_4433c634c20feb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c35a905c-682d-4e7e-8c98-c38b52dd7c73",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "kurtesy <np210291@gmail.com>"
+    }
+  }
+}
