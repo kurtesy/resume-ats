@@ -44,6 +44,7 @@ from app.schemas import (
     UpdateCoverLetterRequest,
     UpdateOutreachMessageRequest,
     UpdateTitleRequest,
+    GenerateContentResponse,
     ResetDatabaseRequest,
     ScrapeJobRequest,
     ScrapeJobResponse,
@@ -60,6 +61,8 @@ from app.core import (
     parse_resume_to_json,
     extract_job_keywords,
     generate_job_title,
+    generate_cover_letter,
+    generate_outreach_message,
     improve_resume,
     calculate_resume_diff,
     parse_document,
@@ -545,6 +548,48 @@ async def update_outreach_message(resume_id: str, req: UpdateOutreachMessageRequ
 async def update_title(resume_id: str, req: UpdateTitleRequest, username: str = "default"):
     db.update_resume(resume_id, {"title": req.title}, username=username)
     return {"message": "Title updated successfully"}
+
+def _get_tailored_job_context(resume_id: str, username: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Resolve a tailored resume's job context, raising HTTPException on any gap."""
+    resume = db.get_resume(resume_id, username=username)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+    if not resume.get("parent_id"):
+        raise HTTPException(
+            status_code=400,
+            detail="This can only be generated for tailored resumes. Please tailor this resume to a job description first.",
+        )
+    improvement = db.get_improvement_by_tailored_resume(resume_id, username=username)
+    if not improvement:
+        raise HTTPException(status_code=400, detail="No job context found for this resume.")
+    job = db.get_job(improvement["job_id"], username=username)
+    if not job:
+        raise HTTPException(status_code=404, detail="The associated job description was not found.")
+    if not resume.get("processed_data"):
+        raise HTTPException(status_code=400, detail="Resume has no processed data. Please re-upload the resume.")
+    return resume, job
+
+@app.post("/api/v1/resumes/{resume_id}/generate-cover-letter", response_model=GenerateContentResponse)
+async def generate_cover_letter_endpoint(resume_id: str, username: str = "default"):
+    resume, job = _get_tailored_job_context(resume_id, username)
+    try:
+        content = await generate_cover_letter(resume["processed_data"], job["content"])
+    except Exception as e:
+        logger.error(f"Cover letter generation failed for resume {resume_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate cover letter. Please try again.")
+    db.update_resume(resume_id, {"cover_letter": content}, username=username)
+    return GenerateContentResponse(content=content, message="Cover letter generated successfully")
+
+@app.post("/api/v1/resumes/{resume_id}/generate-outreach", response_model=GenerateContentResponse)
+async def generate_outreach_endpoint(resume_id: str, username: str = "default"):
+    resume, job = _get_tailored_job_context(resume_id, username)
+    try:
+        content = await generate_outreach_message(resume["processed_data"], job["content"])
+    except Exception as e:
+        logger.error(f"Outreach message generation failed for resume {resume_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate outreach message. Please try again.")
+    db.update_resume(resume_id, {"outreach_message": content}, username=username)
+    return GenerateContentResponse(content=content, message="Outreach message generated successfully")
 
 # ------------------------------------------
 # JOBS ENDPOINTS

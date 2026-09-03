@@ -914,6 +914,48 @@ Job Description:
 {job_description}
 Output the title line only, nothing else."""
 
+COVER_LETTER_PROMPT = """Write a brief cover letter for this job application.
+
+Job Description:
+{job_description}
+
+Candidate Resume (JSON):
+{resume_data}
+
+Requirements:
+- 100-150 words maximum
+- 3-4 short paragraphs
+- Opening: Reference ONE specific thing from the job description (product, tech stack, or problem they're solving) - not generic excitement about "the role"
+- Middle: Pick 1-2 qualifications from resume that DIRECTLY match stated requirements - prioritize relevance over impressiveness
+- Closing: Simple availability to discuss, no desperate enthusiasm
+- If resume shows career transition, frame the pivot as intentional and relevant
+- Extract company name from job description - do not use placeholders
+- Do NOT invent information not in the resume
+- Tone: Confident peer, not eager applicant
+- Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
+
+Output plain text only. No JSON, no markdown formatting."""
+
+OUTREACH_MESSAGE_PROMPT = """Generate a cold outreach message for LinkedIn or email about this job opportunity.
+
+Job Description:
+{job_description}
+
+Candidate Resume (JSON):
+{resume_data}
+
+Guidelines:
+- 70-100 words maximum (shorter than a cover letter)
+- First sentence: Reference specific detail from job description (team, product, technical challenge) - never open with "I'm reaching out" or "I saw your posting"
+- One sentence on strongest matching qualification with a concrete metric if available
+- End with low-friction ask: "Worth a quick chat?" not "I'd love the opportunity to discuss"
+- Tone: How you'd message a former colleague, not a stranger
+- Do NOT include placeholder brackets
+- Do NOT use phrases like "excited about" or "passionate about"
+- Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
+
+Output plain text only. No JSON, no markdown formatting."""
+
 # ==========================================
 # 4. PARSING & IMPROVEMENT CORE LOGIC
 # ==========================================
@@ -1074,6 +1116,32 @@ async def generate_job_title(job_description: str) -> str:
     prompt = GENERATE_TITLE_PROMPT.format(job_description=sanitized)
     title = await complete(prompt, "You are a precise title parser. You output only a single 'Role @ Company' line with no extra words.")
     return title.strip().strip('"').strip("'")
+
+async def generate_cover_letter(resume_data: dict[str, Any], job_description: str) -> str:
+    sanitized = _sanitize_user_input(job_description)
+    prompt = COVER_LETTER_PROMPT.format(
+        job_description=sanitized,
+        resume_data=json.dumps(resume_data, indent=2),
+    )
+    result = await complete(
+        prompt,
+        "You are a professional career coach and resume writer. Write compelling, personalized cover letters.",
+        max_tokens=2048,
+    )
+    return result.strip()
+
+async def generate_outreach_message(resume_data: dict[str, Any], job_description: str) -> str:
+    sanitized = _sanitize_user_input(job_description)
+    prompt = OUTREACH_MESSAGE_PROMPT.format(
+        job_description=sanitized,
+        resume_data=json.dumps(resume_data, indent=2),
+    )
+    result = await complete(
+        prompt,
+        "You are a professional networking coach. Write genuine, engaging cold outreach messages.",
+        max_tokens=1024,
+    )
+    return result.strip()
 
 async def improve_resume(
     original_resume: str,

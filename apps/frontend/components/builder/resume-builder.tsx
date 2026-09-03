@@ -38,6 +38,7 @@ import {
   generateOutreachMessage,
   fetchJobDescription,
 } from '@/lib/api/resume';
+import { fetchFeatureConfig } from '@/lib/api/config';
 import { JDComparisonView } from './jd-comparison-view';
 import { RegenerateWizard } from './regenerate-wizard';
 import { useRegenerateWizard } from '@/hooks/use-regenerate-wizard';
@@ -151,6 +152,18 @@ const ResumeBuilderContent = () => {
 
   // JD comparison state
   const [jobDescription, setJobDescription] = useState<string | null>(null);
+
+  // Feature flags (cover letter / outreach message generation)
+  const [featureConfig, setFeatureConfig] = useState({
+    enable_cover_letter: false,
+    enable_outreach_message: false,
+  });
+
+  useEffect(() => {
+    fetchFeatureConfig()
+      .then(setFeatureConfig)
+      .catch((error) => console.error('Failed to load feature config:', error));
+  }, []);
 
   // AI Regenerate wizard
   const regenerateWizard = useRegenerateWizard({
@@ -797,12 +810,12 @@ const ResumeBuilderContent = () => {
                   {
                     id: 'cover-letter',
                     label: t('builder.previewTabs.coverLetter'),
-                    disabled: !coverLetter,
+                    disabled: !coverLetter && !featureConfig.enable_cover_letter,
                   },
                   {
                     id: 'outreach',
                     label: t('builder.previewTabs.outreach'),
-                    disabled: !outreachMessage,
+                    disabled: !outreachMessage && !featureConfig.enable_outreach_message,
                   },
                   {
                     id: 'jd-match',
