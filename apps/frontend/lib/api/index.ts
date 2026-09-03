@@ -25,7 +25,7 @@ export {
   fetchResume,
   fetchResumeList,
   updateResume,
-  downloadResumePdf,
+  getResumePrintUrl,
   deleteResume,
   scrapeJobUrl,
   type ResumeListItem,

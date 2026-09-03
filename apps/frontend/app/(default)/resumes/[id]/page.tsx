@@ -7,8 +7,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
 import {
   fetchResume,
-  downloadResumePdf,
-  getResumePdfUrl,
+  getResumePrintUrl,
   deleteResume,
   retryProcessing,
   renameResume,
@@ -19,7 +18,7 @@ import { EnrichmentModal } from '@/components/enrichment/enrichment-modal';
 import { useTranslations } from '@/lib/i18n';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
-import { downloadBlobAsFile, openUrlInNewTab, sanitizeFilename } from '@/lib/utils/download';
+import { openUrlInNewTab } from '@/lib/utils/download';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
 
@@ -162,23 +161,14 @@ export default function ResumeViewerPage() {
     reloadResumeData();
   };
 
-  const handleDownload = async () => {
-    try {
-      const blob = await downloadResumePdf(resumeId, undefined, uiLanguage);
-      const filename = sanitizeFilename(resumeTitle, resumeId, 'resume');
-      downloadBlobAsFile(blob, filename);
-      setShowDownloadSuccessDialog(true);
-    } catch (err) {
-      console.error('Failed to download resume:', err);
-      if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
-        const fallbackUrl = getResumePdfUrl(resumeId, undefined, uiLanguage);
-        const didOpen = openUrlInNewTab(fallbackUrl);
-        if (!didOpen) {
-          alert(t('common.popupBlocked', { url: fallbackUrl }));
-        }
-        return;
-      }
+  const handleDownload = () => {
+    const printUrl = getResumePrintUrl(resumeId, undefined, uiLanguage);
+    const didOpen = openUrlInNewTab(printUrl);
+    if (!didOpen) {
+      alert(t('common.popupBlocked', { url: printUrl }));
+      return;
     }
+    setShowDownloadSuccessDialog(true);
   };
 
   const handleDeleteResume = async () => {

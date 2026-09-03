@@ -2,7 +2,7 @@ import { ImprovedResult } from '@/components/common/resume_previewer_context';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 import { type TemplateSettings } from '@/lib/types/template-settings';
 import { type Locale } from '@/i18n/config';
-import { API_BASE, apiPost, apiPatch, apiDelete, apiFetch } from './client';
+import { apiPost, apiPatch, apiDelete, apiFetch } from './client';
 
 // Matches backend schemas/models.py ResumeData
 interface ProcessedResume {
@@ -226,7 +226,8 @@ export async function updateResume(
   return payload.data;
 }
 
-export function getResumePdfUrl(
+/** Builds the print-preview URL used to render a resume for browser printing (Save as PDF). */
+export function getResumePrintUrl(
   resumeId: string,
   settings?: TemplateSettings,
   locale?: Locale
@@ -258,22 +259,9 @@ export function getResumePdfUrl(
   if (locale) {
     params.set('lang', locale);
   }
+  params.set('autoprint', 'true');
 
-  return `${API_BASE}/resumes/${encodeURIComponent(normalizedId)}/pdf?${params.toString()}`;
-}
-
-export async function downloadResumePdf(
-  resumeId: string,
-  settings?: TemplateSettings,
-  locale?: Locale
-): Promise<Blob> {
-  const url = getResumePdfUrl(resumeId, settings, locale);
-  const res = await apiFetch(url);
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`Failed to download resume (status ${res.status}): ${text}`);
-  }
-  return await res.blob();
+  return `/print/resumes/${encodeURIComponent(normalizedId)}?${params.toString()}`;
 }
 
 /** Deletes a resume by ID */
@@ -314,8 +302,8 @@ export async function renameResume(resumeId: string, title: string): Promise<voi
   }
 }
 
-/** Downloads cover letter as PDF */
-export function getCoverLetterPdfUrl(
+/** Builds the print-preview URL used to render a cover letter for browser printing (Save as PDF). */
+export function getCoverLetterPrintUrl(
   resumeId: string,
   pageSize: 'A4' | 'LETTER' = 'A4',
   locale?: Locale
@@ -325,21 +313,8 @@ export function getCoverLetterPdfUrl(
   if (locale) {
     params.set('lang', locale);
   }
-  return `${API_BASE}/resumes/${encodeURIComponent(normalizedId)}/cover-letter/pdf?${params.toString()}`;
-}
-
-export async function downloadCoverLetterPdf(
-  resumeId: string,
-  pageSize: 'A4' | 'LETTER' = 'A4',
-  locale?: Locale
-): Promise<Blob> {
-  const url = getCoverLetterPdfUrl(resumeId, pageSize, locale);
-  const res = await apiFetch(url);
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`Failed to download cover letter (status ${res.status}): ${text}`);
-  }
-  return await res.blob();
+  params.set('autoprint', 'true');
+  return `/print/cover-letter/${encodeURIComponent(normalizedId)}?${params.toString()}`;
 }
 
 /** Generates a cover letter on-demand for a tailored resume */

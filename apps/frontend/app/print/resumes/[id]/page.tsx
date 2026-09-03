@@ -13,6 +13,7 @@ import { API_BASE } from '@/lib/api/client';
 import { translate } from '@/lib/i18n/server';
 import { resolveLocale } from '@/lib/i18n/locale';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
+import { PrintAutoTrigger } from '@/components/print/print-auto-trigger';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -34,6 +35,7 @@ type PageProps = {
     showContactIcons?: string;
     accentColor?: string;
     lang?: string;
+    autoprint?: string;
   }>;
 };
 
@@ -233,17 +235,25 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
     accentColor: parseAccentColor(resolvedSearchParams?.accentColor),
   };
 
-  // Note: Margins are applied by Playwright's PDF renderer (not here)
-  // This ensures margins appear on EVERY page, not just the first
-  // The settings are passed to override CSS variables for spacing/fonts only
+  // Margins are applied via @page CSS below so they repeat on every printed
+  // page (a browser's print engine, not this component, owns pagination).
   const printSettings: TemplateSettings = {
     ...settings,
-    // Zero out margins in CSS since Playwright handles them
     margins: { top: 0, bottom: 0, left: 0, right: 0 },
   };
+  const pageSizeCss = settings.pageSize === 'LETTER' ? 'letter' : 'A4';
+  const { top, right, bottom, left } = settings.margins;
+  const autoprint = resolvedSearchParams?.autoprint === 'true';
 
   return (
     <div className="resume-print bg-white">
+      <style>{`
+        @page {
+          size: ${pageSizeCss};
+          margin: ${top}mm ${right}mm ${bottom}mm ${left}mm;
+        }
+      `}</style>
+      <PrintAutoTrigger enabled={autoprint} />
       <Resume
         resumeData={localizedResumeData}
         template={settings.template}

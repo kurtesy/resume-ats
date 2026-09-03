@@ -109,3 +109,6 @@ config.json
 .claude/settings.local.json
 *.log
 *.sqlite
+
+#Ignore vscode AI rules
+.github/instructions/codacy.instructions.md

@@ -28,10 +28,8 @@ import {
 import { useResumePreview } from '@/components/common/resume_previewer_context';
 import { PaginatedPreview } from '@/components/preview';
 import {
-  downloadResumePdf,
-  downloadCoverLetterPdf,
-  getResumePdfUrl,
-  getCoverLetterPdfUrl,
+  getResumePrintUrl,
+  getCoverLetterPrintUrl,
   fetchResume,
   updateResume,
   updateCoverLetter,
@@ -47,7 +45,7 @@ import { useTranslations } from '@/lib/i18n';
 import { type TemplateSettings, DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
-import { downloadBlobAsFile, openUrlInNewTab, sanitizeFilename } from '@/lib/utils/download';
+import { openUrlInNewTab } from '@/lib/utils/download';
 import type { RegenerateItemInput } from '@/lib/api/enrichment';
 
 type TabId = 'resume' | 'cover-letter' | 'outreach' | 'jd-match';
@@ -110,7 +108,6 @@ const ResumeBuilderContent = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSavedData, setLastSavedData] = useState<ResumeData>(() => initialData);
   const [isSaving, setIsSaving] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
   const [, setLoadingState] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
   const [templateSettings, setTemplateSettings] =
     useState<TemplateSettings>(DEFAULT_TEMPLATE_SETTINGS);
@@ -143,7 +140,6 @@ const ResumeBuilderContent = () => {
   const [isCoverLetterSaving, setIsCoverLetterSaving] = useState(false);
   const [isOutreachSaving, setIsOutreachSaving] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  const [resumeTitle, setResumeTitle] = useState<string | null>(null);
 
   // On-demand generation state
   const [isTailoredResume, setIsTailoredResume] = useState(false);
@@ -168,8 +164,6 @@ const ResumeBuilderContent = () => {
 
       try {
         const data = await fetchResume(resumeId);
-        // Update resume title for downloads
-        setResumeTitle(data.title ?? null);
         if (data.processed_resume) {
           setResumeData(data.processed_resume as ResumeData);
           setLastSavedData(data.processed_resume as ResumeData);
@@ -288,8 +282,6 @@ const ResumeBuilderContent = () => {
           const data = await fetchResume(resumeId);
           // Track if this is a tailored resume (has parent_id)
           setIsTailoredResume(Boolean(data.parent_id));
-          // Store resume title for downloads
-          setResumeTitle(data.title ?? null);
           // Load cover letter and outreach message if available
           if (data.cover_letter) {
             setCoverLetter(data.cover_letter);
@@ -428,34 +420,15 @@ const ResumeBuilderContent = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(lastSavedData));
   };
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     if (!resumeId) {
       showNotification(t('builder.alerts.downloadNotAvailable'), 'warning');
       return;
     }
-    try {
-      setIsDownloading(true);
-      const blob = await downloadResumePdf(resumeId, templateSettings, uiLanguage);
-      const filename = sanitizeFilename(resumeTitle, resumeId, 'resume');
-      downloadBlobAsFile(blob, filename);
-      showNotification(t('builder.alerts.downloadSuccess'), 'ghost');
-    } catch (error) {
-      console.error('Failed to download resume:', error);
-      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        const fallbackUrl = getResumePdfUrl(resumeId, templateSettings, uiLanguage);
-        const didOpen = openUrlInNewTab(fallbackUrl);
-        if (!didOpen) {
-          showNotification(t('common.popupBlocked', { url: fallbackUrl }), 'warning');
-        }
-        return;
-      }
-      let errorMessage = t('builder.alerts.downloadFailed');
-      if (error instanceof Error && error.message) {
-        errorMessage = `${t('builder.alerts.downloadFailed')}: ${error.message}`;
-      }
-      showNotification(errorMessage, 'danger');
-    } finally {
-      setIsDownloading(false);
+    const printUrl = getResumePrintUrl(resumeId, templateSettings, uiLanguage);
+    const didOpen = openUrlInNewTab(printUrl);
+    if (!didOpen) {
+      showNotification(t('common.popupBlocked', { url: printUrl }), 'warning');
     }
   };
 
@@ -474,7 +447,7 @@ const ResumeBuilderContent = () => {
     }
   };
 
-  const handleDownloadCoverLetter = async () => {
+  const handleDownloadCoverLetter = () => {
     if (!resumeId) {
       showNotification(t('builder.alerts.coverLetterDownloadRequiresResume'), 'warning');
       return;
@@ -483,28 +456,10 @@ const ResumeBuilderContent = () => {
       showNotification(t('builder.alerts.coverLetterMissing'), 'warning');
       return;
     }
-    try {
-      setIsDownloading(true);
-      const blob = await downloadCoverLetterPdf(resumeId, templateSettings.pageSize, uiLanguage);
-      const filename = sanitizeFilename(resumeTitle, resumeId, 'cover-letter');
-      downloadBlobAsFile(blob, filename);
-    } catch (error) {
-      console.error('Failed to download cover letter:', error);
-      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        const fallbackUrl = getCoverLetterPdfUrl(resumeId, templateSettings.pageSize, uiLanguage);
-        const didOpen = openUrlInNewTab(fallbackUrl);
-        if (!didOpen) {
-          showNotification(t('common.popupBlocked', { url: fallbackUrl }), 'warning');
-        }
-        return;
-      }
-      const errorMessage = error instanceof Error ? error.message : t('common.unknown');
-      showNotification(
-        t('builder.alerts.coverLetterDownloadFailed', { error: errorMessage }),
-        'danger'
-      );
-    } finally {
-      setIsDownloading(false);
+    const printUrl = getCoverLetterPrintUrl(resumeId, templateSettings.pageSize, uiLanguage);
+    const didOpen = openUrlInNewTab(printUrl);
+    if (!didOpen) {
+      showNotification(t('common.popupBlocked', { url: printUrl }), 'warning');
     }
   };
 
@@ -652,14 +607,9 @@ const ResumeBuilderContent = () => {
                     <Save className="w-4 h-4" />
                     {isSaving ? t('common.saving') : t('common.save')}
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleDownload}
-                    disabled={!resumeId || isDownloading}
-                  >
+                  <Button variant="ghost" size="sm" onClick={handleDownload} disabled={!resumeId}>
                     <Download className="w-4 h-4" />
-                    {isDownloading ? t('common.generating') : t('common.download')}
+                    {t('common.download')}
                   </Button>
                 </>
               )}
@@ -684,10 +634,10 @@ const ResumeBuilderContent = () => {
                     variant="ghost"
                     size="sm"
                     onClick={handleDownloadCoverLetter}
-                    disabled={!resumeId || isDownloading}
+                    disabled={!resumeId}
                   >
                     <Download className="w-4 h-4" />
-                    {isDownloading ? t('common.generating') : t('common.download')}
+                    {t('common.download')}
                   </Button>
                 </>
               )}

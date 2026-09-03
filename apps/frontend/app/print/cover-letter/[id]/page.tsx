@@ -8,6 +8,7 @@
 import { API_BASE } from '@/lib/api/client';
 import { translate } from '@/lib/i18n/server';
 import { resolveLocale } from '@/lib/i18n/locale';
+import { PrintAutoTrigger } from '@/components/print/print-auto-trigger';
 
 const PAGE_DIMENSIONS = {
   A4: { width: 210, height: 297 },
@@ -21,6 +22,7 @@ type PageProps = {
   searchParams?: Promise<{
     pageSize?: string;
     lang?: string;
+    autoprint?: string;
   }>;
 };
 
@@ -87,6 +89,7 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
     day: 'numeric',
   });
   const nameFallback = translate(locale, 'resume.defaults.name');
+  const autoprint = resolvedSearchParams?.autoprint === 'true';
 
   // Split cover letter into paragraphs
   const paragraphs = coverLetter
@@ -107,6 +110,13 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
         color: '#000000',
       }}
     >
+      <style>{`
+        @page {
+          size: ${pageSize === 'LETTER' ? 'letter' : 'A4'};
+          margin: 0;
+        }
+      `}</style>
+      <PrintAutoTrigger enabled={autoprint} />
       {/* Header - Personal Info */}
       <header
         style={{
