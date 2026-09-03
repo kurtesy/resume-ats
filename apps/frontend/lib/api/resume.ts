@@ -259,6 +259,12 @@ export function getResumePrintUrl(
   if (locale) {
     params.set('lang', locale);
   }
+  if (typeof window !== 'undefined') {
+    const username = localStorage.getItem('username');
+    if (username) {
+      params.set('username', username);
+    }
+  }
   params.set('autoprint', 'true');
 
   return `/print/resumes/${encodeURIComponent(normalizedId)}?${params.toString()}`;
@@ -312,6 +318,12 @@ export function getCoverLetterPrintUrl(
   const params = new URLSearchParams({ pageSize });
   if (locale) {
     params.set('lang', locale);
+  }
+  if (typeof window !== 'undefined') {
+    const username = localStorage.getItem('username');
+    if (username) {
+      params.set('username', username);
+    }
   }
   params.set('autoprint', 'true');
   return `/print/cover-letter/${encodeURIComponent(normalizedId)}?${params.toString()}`;
